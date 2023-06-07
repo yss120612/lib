@@ -10,7 +10,7 @@
 #define DOUBLECLICK 700
 
 
-enum blinkmode_t
+enum blinkmode_t : uint8_t
 {
     BLINK_OFF,
     BLINK_ON,
@@ -85,7 +85,7 @@ struct __attribute__((__packed__)) relState_t
 
 
 #define ALARMS_COUNT 10
-#define LEDS_COUNT 3
+#define LEDS_COUNT 4
 #define RELAYS_COUNT 4
 
 const uint16_t WEEK = 10080; // minutes in week
@@ -109,8 +109,8 @@ struct __attribute__((__packed__)) bool1_t
 
 struct __attribute__((__packed__)) led_state_t
 {
-  uint8_t value:8;
-  blinkmode_t stste:8;
+  uint8_t value;
+  blinkmode_t stste : 8;
 };
 
 struct __attribute__((__packed__)) SystemState_t
@@ -225,7 +225,7 @@ struct event_t
 {
     buttonstate_t state;
     uint16_t button;
-    uint8_t count;
+    uint16_t count;
     // int8_t type;
     union
     {
@@ -270,27 +270,41 @@ static uint8_t crc8(uint8_t *buffer, uint16_t size) {
 #define LEDSETPARAM1 1
 #define LEDSETPARAM2 2
 #define LEDSETPARAM3 3
+#define LEDSETPARAM4 4
 
 #define LEDBRIGHTNESS1 21
 #define LEDBRIGHTNESS2 22
 #define LEDBRIGHTNESS3 23
+#define LEDBRIGHTNESS4 24
     
 #define LEDMODE1 31
 #define LEDMODE2 32
 #define LEDMODE3 33
+#define LEDMODE4 34
+
+#define LEDWRITE1 20
+#define LEDWRITE2 21
+#define LEDWRITE3 22
+#define LEDWRITE4 23
+
 
 #define LEDALLOFF 40
 
 
-#define RELAYSET1 1
-#define RELAYSET2 2
-#define RELAYSET3 3
-#define RELAYSET4 4
+#define RELAYSET1 41
+#define RELAYSET2 42
+#define RELAYSET3 43
+#define RELAYSET4 44
 
 #define RELAYSWITCH1 11
 #define RELAYSWITCH2 12
 #define RELAYSWITCH3 13
 #define RELAYSWITCH4 14
+
+#define RELWRITE1   10
+#define RELWRITE2   11
+#define RELWRITE3   12
+#define RELWRITE4   13
 
 #define RELAYALLOFF 20
 

@@ -24,10 +24,10 @@ void LEDTask::setup()
 
   for (uint8_t i = 0; i < LEDS_COUNT; i++)
   {
-    if (band_pins[i] > 0)
+    if (pins[i] > 0)
     {
 
-      led[i] = new Led(band_pins[i], _level, channels[i]);
+      led[i] = new Led(pins[i], _level, channels[i]);
     }
     else
       led[i] = NULL;
@@ -38,7 +38,7 @@ void LEDTask::save(uint8_t idx)
 {
   event_t ev;
   ev.state = MEM_EVENT;
-  ev.button = 20 + idx;
+  ev.button = LEDWRITE1 + idx;
   ev.count = led[idx]->getMode();
   ev.data = led[idx]->getBrightness();
   xQueueSend(que, &ev, portMAX_DELAY);
@@ -78,16 +78,16 @@ void LEDTask::setLedBrightness(uint8_t ledN, uint8_t br, bool sav)
 
 void LEDTask::setLedMode(uint8_t LedN, blinkmode_t bm, bool sav)
 {
-  if (LedN < LEDS_COUNT && led[LedN])
-    led[LedN]->setMode(bm);
-  else
+  if (LedN >= LEDS_COUNT || !led[LedN])
   {
 #ifdef DEBUGG
-    Serial.print(LedN);
-    Serial.println(" LED IS NULL (in setMode)");
+    Serial.print(ledN);
+    Serial.println(" LED IS NULL (in setBrightness)");
 #endif
     return;
-  };
+  }
+
+  led[LedN]->setMode(bm);
   xTimerStop(_timer, 0);
   bool need_timer = false;
   uint8_t duty;
@@ -127,27 +127,29 @@ void LEDTask::loop()
 {
   uint32_t command;
   notify_t nt;
-  memcpy(&nt, &command, sizeof(command));
+  
   if (xTaskNotifyWait(0, 0, &command, portMAX_DELAY))
   {
     memcpy(&nt, &command, sizeof(command));
-
     switch (nt.title)
     {
     case LEDSETPARAM1:
     case LEDSETPARAM2:
     case LEDSETPARAM3: // init leds from memory
+    case LEDSETPARAM4:
       setLedMode(nt.title - LEDSETPARAM1, (blinkmode_t)nt.packet.var, false);
       setLedBrightness(nt.title - 1, nt.packet.value, false);
       break;
     case LEDBRIGHTNESS1:
     case LEDBRIGHTNESS2:
     case LEDBRIGHTNESS3:
+    case LEDBRIGHTNESS4:
       setLedBrightness(nt.title - LEDBRIGHTNESS1, nt.packet.value, nt.packet.var);
       break;
     case LEDMODE1:
     case LEDMODE2:
     case LEDMODE3:
+    case LEDMODE4:
       setLedMode(nt.title - LEDMODE1, (blinkmode_t)nt.packet.value, nt.packet.var);
       break;
     case LEDALLOFF:
@@ -169,12 +171,12 @@ void LEDTask::cleanup()
 
   for (uint8_t i = 0; i < LEDS_COUNT; i++)
   {
-    if (band_pins[i] <= 0)
+    if (pins[i] <= 0)
       break;
 
     ledc_stop(SPEED_MODE, channels[i], 0);
 
-    gpio_reset_pin((gpio_num_t)band_pins[i]);
+    gpio_reset_pin((gpio_num_t)pins[i]);
     delete (led[i]);
   }
   //}

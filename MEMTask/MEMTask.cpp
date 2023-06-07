@@ -78,14 +78,14 @@ void MEMTask::loop()
 		{
 		
 	
-		case 10:	
-		case 11:
-		case 12:
-		case 13:
-		sstate.rel[nt.title-10]=nt.packet.value;
+		case RELWRITE1:	
+		case RELWRITE2:
+		case RELWRITE3:
+		case RELWRITE4:
+		sstate.rel[nt.title-RELWRITE1]=nt.packet.value;
 		#ifdef DEBUGG
 		Serial.print("Relay");
-        Serial.print(nt.title-10);
+        Serial.print(nt.title-RELWRITE1);
         Serial.print(" set ");
         Serial.println(nt.packet.value);
 		#endif
@@ -94,11 +94,12 @@ void MEMTask::loop()
 		//xTaskNotifyStateClear(NULL);
 		
 		break;
-		case 20:	
-		case 21:
-		case 22:
-		sstate.br[nt.title-20].stste=(blinkmode_t)nt.packet.var;
-		sstate.br[nt.title-20].value=nt.packet.value;
+		case LEDWRITE1:	
+		case LEDWRITE2:
+		case LEDWRITE3:
+		case LEDWRITE4:
+		sstate.br[nt.title-LEDWRITE1].stste=(blinkmode_t)nt.packet.var;
+		sstate.br[nt.title-LEDWRITE1].value=nt.packet.value;
 		#ifdef DEBUGG
 		Serial.print("Leds band=");
         Serial.print(nt.title-20);
@@ -158,14 +159,14 @@ void MEMTask::loop()
 
 void MEMTask::read(uint16_t index, uint8_t *buf, uint16_t len)
 {
-	index += AT24C32_OFFSET;
+	index += OFFSET;
 	index &= 0x0FFF;
 	uint16_t idx=0;
 	uint8_t count=0;
 	//Serial.println("Read ");
 	for (idx=0;idx<len;idx++){
 		if (((index+idx)%EEPROM_PAGE_SIZE==0) || idx==0){
-			 Wire.beginTransmission(AT24C32_ADDRESS);
+			 Wire.beginTransmission(ADDRESS);
 			 vTaskDelay(pdMS_TO_TICKS(EEPROM_WRITE_TIMEOUT));
     		 Wire.write(((index+idx) >> 8) & 0x0F);
 			 Wire.write((index+idx) & 0xFF);
@@ -177,7 +178,7 @@ void MEMTask::read(uint16_t index, uint8_t *buf, uint16_t len)
 			 else{
 				count=len-idx>=EEPROM_PAGE_SIZE?EEPROM_PAGE_SIZE:len-idx;
 			 }
-			 Wire.requestFrom(AT24C32_ADDRESS, count);	
+			 Wire.requestFrom(ADDRESS, count);	
 			 vTaskDelay(pdMS_TO_TICKS(EEPROM_WRITE_TIMEOUT));
 			}
 			
@@ -194,7 +195,7 @@ void MEMTask::read(uint16_t index, uint8_t *buf, uint16_t len)
 
 void MEMTask::write(uint16_t index, const uint8_t *buf, uint16_t len)
 {
-	index += AT24C32_OFFSET;
+	index += OFFSET;
 	index &= 0x0FFF;
 	uint16_t idx=0;
 	//Serial.print("Write ");
@@ -204,7 +205,7 @@ void MEMTask::write(uint16_t index, const uint8_t *buf, uint16_t len)
 				Wire.endTransmission();
 				vTaskDelay(pdMS_TO_TICKS(EEPROM_WRITE_TIMEOUT));
 				}
-    		Wire.beginTransmission(AT24C32_ADDRESS);
+    		Wire.beginTransmission(ADDRESS);
 			vTaskDelay(pdMS_TO_TICKS(EEPROM_WRITE_TIMEOUT));
     		Wire.write(((index+idx) >> 8) & 0x0F);
 			Wire.write((index+idx) & 0xFF);

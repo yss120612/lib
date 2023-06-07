@@ -3,8 +3,6 @@
 #include <Task.h>
 #include <Wire.h>
 
-#define AT24C32_ADDRESS 0x57
-#define AT24C32_OFFSET 0x100
 #define EEPROM_PAGE_SIZE 32
 #define EEPROM_WRITE_TIMEOUT 10
 #define WAIT_BEFORE_WRITE 20000
@@ -12,7 +10,7 @@
 class MEMTask: public Task
 {
 public:
-MEMTask(const char *name, uint32_t stack,QueueHandle_t q,MessageBufferHandle_t a,MessageBufferHandle_t w, uint8_t v):Task(name, stack){que=q;alarm_mess=a;web_mess=w;VER=v;}
+MEMTask(const char *name, uint32_t stack,QueueHandle_t q,MessageBufferHandle_t a,MessageBufferHandle_t w, uint8_t v,uint8_t adr,uint8_t ofs):Task(name, stack){que=q;alarm_mess=a;web_mess=w;VER=v;ADDRESS=adr,OFFSET=ofs;}
 
 protected:
 
@@ -43,6 +41,7 @@ MessageBufferHandle_t web_mess;
 SystemState_t sstate;
 TimerHandle_t _timer;
 uint8_t VER;
-
+uint8_t ADDRESS;
+uint8_t OFFSET;
 };
 #endif

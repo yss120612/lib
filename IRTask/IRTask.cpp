@@ -1,7 +1,7 @@
 #include "IRTask.h"
 
 void IRTask::setup(){
-irrecv = new IRrecv(IR_PIN);
+irrecv = new IRrecv(pin);
 irrecv->enableIRIn();
 }
 
@@ -23,7 +23,7 @@ void IRTask::loop(){
         Serial.print(" Type="); 
         Serial.println(ev.data);
         #endif
-        if (dres.address==IR_DEVICE){
+        if (dres.address==device){
         xQueueSend(que,&ev,portMAX_DELAY);
         }
         

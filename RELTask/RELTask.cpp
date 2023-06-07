@@ -30,7 +30,7 @@ xTimerStart(_timer,0);
 void RELTask::save(uint8_t idx){
         event_t ev;
         ev.state=MEM_EVENT;
-        ev.button=10+idx;
+        ev.button=RELWRITE1+idx;
         ev.count=relay[idx].isOn();
         xQueueSend(que,&ev,portMAX_DELAY);    
 }
@@ -43,10 +43,7 @@ void RELTask::loop()
   uint8_t i;
   if (xTaskNotifyWait(0, 0, &command, portMAX_DELAY))
   {
-    //uint8_t comm,act;
-    //uint16_t data;
-    //memcpy(&nt,&command,sizeof(nt));
-    //readPacket(command,&comm,&act,&data);
+    memcpy(&nt,&command,sizeof(nt));
     switch (nt.title)
     {
     case RELAYSET1:
@@ -58,8 +55,8 @@ void RELTask::loop()
       arm(nt.title-RELAYSET1);
     }
     else{
-      relay[nt.title-1].setState(nt.packet.value>0);
-      if (!nt.packet.var) save(nt.title-1);
+      relay[nt.title-RELAYSET1].setState(nt.packet.value>0);
+      if (!nt.packet.var) save(nt.title-RELAYSET1);
     }
     break;
     case RELAYSWITCH1:
@@ -87,16 +84,18 @@ void RELTask::loop()
     }
   break;
   
-  case RELAYPRINTSTATE:
-     #ifdef DEBUGG
-    for (i=0;i<4;i++){
+  case INITRELAYS:
+     
+    for (i=0;i<RELAYS_COUNT;i++){
     if (!relay[i].isButton())
     {
       relay[i].setState(nt.packet.value>>i & 1);
+      #ifdef DEBUGG
       Serial.printf("Relay%d %d \n",i,relay[i].isOn());
+      #endif
     }
     }
-    #endif
+    
     
   break;
   }

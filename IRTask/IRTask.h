@@ -5,12 +5,11 @@
 #include <IRrecv.h>
 //#include "Settings.h"
 //#include "Events.h"
-#define IR_PIN GPIO_NUM_34 // pin for IR receiver
-#define IR_DEVICE 162
+
 
 class IRTask: public Task{
 public:    
-IRTask(const char *name, uint32_t stack, QueueHandle_t q):Task(name, stack){que=q;};
+IRTask(const char *name, uint32_t stack, QueueHandle_t q, uint8_t p, uint16_t d):Task(name, stack){que=q;pin=p;device=d;};
 
 protected:
 void cleanup() override;
@@ -20,6 +19,8 @@ QueueHandle_t que;
 IRrecv * irrecv;
 decode_results dres;
 uint32_t old_command;    
+uint8_t pin;
+uint16_t device;
 };
 
 

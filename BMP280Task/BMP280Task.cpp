@@ -3,7 +3,7 @@
 void BMP280Task::setup(){
 bmp= new Adafruit_BMP280();
 if (bmp){
-    bmp->begin(ADDRESS);
+    bmp->begin(addr);
 }
 }
 

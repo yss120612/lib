@@ -12,7 +12,7 @@
 //#define LED_PIN GPIO_NUM_32
 //const ledc_channel_t channels[]={LEDC_CHANNEL_0,LEDC_CHANNEL_1,LEDC_CHANNEL_2,LEDC_CHANNEL_3};
 
-static const char dayofweek[] = "SunMonTueWedThuFriSat";
+static const char  dayofweek[] ="\xD0\x92\xD1\x81\x2E\xD0\x9F\xD0\xBD\x2E\xD0\x92\xD1\x82\x2E\xD0\xA1\xD1\x80\x2E\xD0\xA7\xD1\x82\x2E\xD0\x9F\xD1\x82\x2E\xD0\xA1\xD0\xB1\x2E";
 static const char * NTPServer = "pool.ntp.org";
 
 class RTCTask: public Task{
