@@ -9,6 +9,7 @@
 #define LONGCLICK 1000
 #define DOUBLECLICK 700
 
+#define DISP_MESSAGE_LENGTH 120
 
 enum blinkmode_t : uint8_t
 {
@@ -276,6 +277,7 @@ static uint8_t crc8(uint8_t *buffer, uint16_t size) {
 #define LEDBRIGHTNESS2 22
 #define LEDBRIGHTNESS3 23
 #define LEDBRIGHTNESS4 24
+#define LEDBRIGHTNESSALL3 25
     
 #define LEDMODE1 31
 #define LEDMODE2 32
@@ -318,7 +320,15 @@ static uint8_t crc8(uint8_t *buffer, uint16_t size) {
 #define ALARMSPRINT 11
 #define ALARMSRESET 13
 
+#define RTCGETTIME 10
 
-#define GETDATETIME 10
+//#define GETDATETIME 10
+
+#define LED_CONNECTING 111
+#define LED_CONNECTED 112
+#define LED_CONNECT_FAILED 113
+
+#define SHOWTIME 1
+
 
 #endif

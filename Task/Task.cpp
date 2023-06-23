@@ -60,7 +60,10 @@ void Task::destroy() {
 
 void Task::notify(uint32_t value) {
   if (_task) {
-    xTaskNotify(_task, value, eSetValueWithOverwrite);
+//xTaskNotify(_task, value, eSetValueWithoutOverwrite);
+     while (xTaskNotify(_task, value, eSetValueWithoutOverwrite)==pdFALSE){
+       vTaskDelay(1);
+     }
     
   }
 }
@@ -68,9 +71,7 @@ void Task::notify(uint32_t value) {
 void Task::notify(notify_t nt) {
   uint32_t value;
   memcpy(&value,&nt, sizeof(value));
-  if (_task) {
-    xTaskNotify(_task, value, eSetValueWithOverwrite);
-  }
+  notify(value);
 }
 
 void Task::lock() {

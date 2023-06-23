@@ -9,7 +9,7 @@ void LEDTask::setup()
       .speed_mode = SPEED_MODE,
       {.duty_resolution = LEDC_TIMER_8_BIT},
       .timer_num = TIMER_NUM,
-      .freq_hz = 1000};
+      .freq_hz = 2000};
 
   if (ledc_timer_config(&ledc_timer_cfg) != ESP_OK)
   {
@@ -127,7 +127,7 @@ void LEDTask::loop()
 {
   uint32_t command;
   notify_t nt;
-  
+
   if (xTaskNotifyWait(0, 0, &command, portMAX_DELAY))
   {
     memcpy(&nt, &command, sizeof(command));
@@ -151,6 +151,17 @@ void LEDTask::loop()
     case LEDMODE3:
     case LEDMODE4:
       setLedMode(nt.title - LEDMODE1, (blinkmode_t)nt.packet.value, nt.packet.var);
+
+      break;
+    case LEDBRIGHTNESSALL3: // set first 3 channels in one notify
+      setLedBrightness(0, (nt.packet.value >> 8) & 0x00FF, 0);
+      setLedBrightness(1, nt.packet.value & 0x00FF, 0);
+      setLedBrightness(2, nt.packet.var, 0);
+      setLedMode(0, BLINK_ON, 1);
+      vTaskDelay(pdMS_TO_TICKS(500));
+      setLedMode(1, BLINK_ON, 1);
+      vTaskDelay(pdMS_TO_TICKS(500));
+      setLedMode(2, BLINK_ON, 1);
       break;
     case LEDALLOFF:
       setLedMode(0, BLINK_OFF, true);
@@ -158,9 +169,8 @@ void LEDTask::loop()
       setLedMode(1, BLINK_OFF, true);
       vTaskDelay(pdMS_TO_TICKS(300));
       setLedMode(2, BLINK_OFF, true);
-    break;  
+      break;
     }
-
   }
 }
 
@@ -283,14 +293,14 @@ void LEDTask::timerCallback()
         if (bright > FADES_SIZE - 1)
         {
           setLedMode(i, BLINK_ON);
-          //if (i==2){
-          //event_t ev;
-          //ev.state=LED_EVENT;
-          //ev.button=i+20;
-          //ev.count=0;
-          //ev.data=0;
-          //xQueueSend(que,&ev,portMAX_DELAY);
-          //}
+          // if (i==2){
+          // event_t ev;
+          // ev.state=LED_EVENT;
+          // ev.button=i+20;
+          // ev.count=0;
+          // ev.data=0;
+          // xQueueSend(que,&ev,portMAX_DELAY);
+          // }
           return;
         }
       }
@@ -299,16 +309,17 @@ void LEDTask::timerCallback()
         if (bright > FADES_SIZE - 1)
         {
           setLedMode(i, BLINK_OFF);
-           if (i==2){
-           event_t ev;
-           ev.state=LED_EVENT;
-           ev.button=i+10;
-          // ev.count=0;
-          // //какие реле выключить
-          // //ev.data=1<<24 & 0xFF000000 | 1<<16 & 0x00FF0000 | 0<<8 & 0x0000FF00 | 0 & 0x000000FF;
-           xQueueSend(que,&ev,portMAX_DELAY);
-           }
-          
+          if (i == 2)
+          {
+            event_t ev;
+            ev.state = LED_EVENT;
+            ev.button = i + 10;
+            // ev.count=0;
+            // //какие реле выключить
+            // //ev.data=1<<24 & 0xFF000000 | 1<<16 & 0x00FF0000 | 0<<8 & 0x0000FF00 | 0 & 0x000000FF;
+            xQueueSend(que, &ev, portMAX_DELAY);
+          }
+
           return;
         }
       }

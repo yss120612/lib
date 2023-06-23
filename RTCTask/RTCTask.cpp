@@ -248,12 +248,13 @@ return index;
 
 void RTCTask::loop()
 {
+      event_t ev;
       SystemState_t sst;
       if (xMessageBufferReceive(alarm_mess,&sst,SSTATE_LENGTH,!init_complete?pdMS_TO_TICKS(1000):0)==SSTATE_LENGTH){
       memcpy(alarms,sst.alr,sizeof(alarm_t)*ALARMS_COUNT);
       refreshAlarms();  
       init_complete=true;
-      event_t ev;
+      
       ev.state=MEM_EVENT;//init other devices
       ev.button=INITRELAYS;
       ev.data=sst.rel[0] & 1 | sst.rel[1]<<1 & 2 | sst.rel[2]<<2 & 4 | sst.rel[3]<<3 & 8; 
@@ -290,20 +291,25 @@ void RTCTask::loop()
         #endif
           refreshAlarms();
           break;
-        case GETDATETIME:{
-            char buf[100];
-            size_t si;
-            int res;
+        case RTCGETTIME:{
+            ev.state=DISP_EVENT;
+            ev.button=SHOWTIME;
             if (fast_time_interval){
-              res = snprintf(buf, sizeof(buf), "%s","Time is not*syncronized**");
+              ev.alarm.hour=25;
+              //res = snprintf(buf, sizeof(buf), "%s","Time is not*syncronized**");
             }else{
               DateTime dt=rtc->now();
-              char p [3];
-              strncpy(p,dayofweek+3 * dt.dayOfTheWeek(),3);
-              res = snprintf(buf, sizeof(buf), "Time %d:%02d:%02d*Date %d-%02d-%d*%s", dt.hour(),dt.minute(),dt.second(),dt.day(),dt.month(),dt.year(),p);
+              ev.alarm.hour=dt.hour();
+              ev.alarm.minute=dt.minute();
+              ev.alarm.wday=dt.dayOfTheWeek();
+              ev.alarm.action=dt.month();
+              ev.alarm.period=(period_t)dt.day();
+              
             }
-            si=xMessageBufferSend(disp_mess,buf,res,portMAX_DELAY);
-            break;}
+            //si=xMessageBufferSend(disp_mess,buf,res,portMAX_DELAY);
+            xQueueSend(que,&ev,portMAX_DELAY);
+            break;
+            }
         case ALARMSPRINT:
         {
           #ifdef DEBUGG

@@ -69,6 +69,7 @@ void RELTask::loop()
         relay[nt.title-RELAYSWITCH1].swc();
         save(nt.title-RELAYSWITCH1);
       }
+      Serial.println("Tutt");
       break;
     case RELAYALLOFF:
     #ifdef DEBUGG

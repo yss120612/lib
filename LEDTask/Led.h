@@ -7,6 +7,7 @@
 
 const ledc_timer_t TIMER_NUM = LEDC_TIMER_2;
 const ledc_mode_t SPEED_MODE = LEDC_LOW_SPEED_MODE;
+//const ledc_mode_t SPEED_MODE = LEDC_SPEED_MODE_MAX;
 
 class Led {
 public:

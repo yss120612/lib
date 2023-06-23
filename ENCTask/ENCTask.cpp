@@ -5,11 +5,15 @@
 
 void ENCTask::setup(){
  gpio_set_direction((gpio_num_t)btn_pin, GPIO_MODE_INPUT);
- gpio_set_direction((gpio_num_t)enc1_pin, GPIO_MODE_INPUT);
- gpio_set_direction((gpio_num_t)enc2_pin, GPIO_MODE_INPUT);
  btn_semaphore=xSemaphoreCreateBinary();
  attachInterrupt(digitalPinToInterrupt(btn_pin),std::bind(&ENCTask::btnISR, this),CHANGE);
+ if (enc1_pin>0 && enc2_pin>0)
+ {
+ gpio_set_direction((gpio_num_t)enc1_pin, GPIO_MODE_INPUT);
+ gpio_set_direction((gpio_num_t)enc2_pin, GPIO_MODE_INPUT);
  attachInterrupt(digitalPinToInterrupt(enc1_pin),std::bind(&ENCTask::encISR, this),CHANGE);
+ }
+ 
  btn.xdbl=0;
  btn.pressed=false;
  esp_timer_create_args_t timer_cfg = {
@@ -58,10 +62,13 @@ void ENCTask::loop(){
         if (btn.pressed){
             btn.presstime=ms;
         }else{
+            
             if (ms-btn.presstime >= LONGCLICK){
-                if(btn.xdbl>0) esp_timer_stop(_timer);
+                //if(btn.xdbl>0) esp_timer_stop(_timer);
+                esp_timer_stop(_timer);
                 ev.state=BTN_LONGCLICK;
                 ev.count=btn.xdbl;
+                ev.button=0;
                 xQueueSend(que,&ev,portMAX_DELAY);
                 btn.xdbl=0;
             }else if (ms-btn.presstime>BOUNCE){
@@ -80,6 +87,7 @@ void ENCTask::loop(){
 
 void ENCTask::timerCallback(){
     if (btn.pressed){
+        esp_timer_stop(_timer);
         esp_timer_start_once(_timer, DOUBLECLICK*1000);
         return;
     }
@@ -92,7 +100,7 @@ void ENCTask::timerCallback(){
 }
 
 void ENCTask::cleanup(){
-detachInterrupt((gpio_num_t)enc1_pin);
+if (enc1_pin>0) detachInterrupt((gpio_num_t)enc1_pin);
 detachInterrupt((gpio_num_t)btn_pin);
 esp_timer_stop(_timer);
 esp_timer_delete(_timer);
