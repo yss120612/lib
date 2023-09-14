@@ -40,7 +40,11 @@ enum buttonstate_t : uint8_t
     LED_EVENT,
     ENCODER_EVENT,
     RTC_EVENT,
-    RX433_EVENT
+    RX433_EVENT,
+    HEATER_EVENT,
+    TERMOMETR_EVENT,
+    WS_EVENT,
+    MENU_EVENT
 };
 
 enum period_t : uint8_t
