@@ -6,11 +6,9 @@
 
 
 
-//const char WIFI_SSID[] = "Lite5G";
-//const char WIFI_PSWD[] = "qweasdzxc";
 
-const char WIFI_SSID[] = "Yss_GIGA";
-const char WIFI_PSWD[] = "bqt3bqt3";
+//const char WIFI_SSID[] = "Yss_GIGA";
+//const char WIFI_PSWD[] = "bqt3bqt3";
 
 
 
@@ -29,6 +27,6 @@ void wifiOnEvent(WiFiEvent_t event);
 QueueHandle_t que;
 blinkmode_t saved_mode;
 EventGroupHandle_t flg;
-
+uint8_t index;
 };
 #endif

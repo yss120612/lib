@@ -1,6 +1,11 @@
 #include "WiFiTask.h"
 // #include "Events.h"
 
+#define NETWORKS 2
+
+const char * WIFI_SSID[2] = {"Yss_GIGA","academy"};
+const char *  WIFI_PSWD[2] = {"bqt3bqt3","123qweasdzxc"};
+
 void WiFiTask::setup()
 {
   WiFi.persistent(false);
@@ -8,6 +13,7 @@ void WiFiTask::setup()
   WiFi.onEvent(std::bind(&WiFiTask::wifiOnEvent, this, std::placeholders::_1));
   WiFi.disconnect();
   xEventGroupClearBits(flg, FLAG_WIFI);
+  index=0;
 }
 
 void WiFiTask::cleanup()
@@ -49,7 +55,7 @@ void WiFiTask::loop()
 
   if (!WiFi.isConnected())
   {
-    WiFi.begin(WIFI_SSID, WIFI_PSWD);
+    WiFi.begin(WIFI_SSID[index], WIFI_PSWD[index]);
 #ifdef DEBUGG
     Serial.printf("Connecting to SSID \"%s\"...\n", WIFI_SSID);
 #endif
@@ -65,12 +71,12 @@ void WiFiTask::loop()
     
     if (WiFi.isConnected())
     {
-#ifdef DEBUGG
+//#ifdef DEBUGG
       portENTER_CRITICAL(&_mutex);
       Serial.print("Connected to WiFi with IP ");
       Serial.println(WiFi.localIP());
       portEXIT_CRITICAL(&_mutex);
-#endif
+//#endif
       xEventGroupSetBits(flg, FLAG_WIFI);
       result.button = LED_CONNECTED;
       xQueueSend(que, &result, portMAX_DELAY);
@@ -85,6 +91,8 @@ void WiFiTask::loop()
       result.button = LED_CONNECT_FAILED;
       xQueueSend(que, &result, portMAX_DELAY);
       vTaskDelay(pdMS_TO_TICKS(WIFI_TIMEOUT));
+      index++;
+      if (index>=NETWORKS) index=0;
     }
   }
   else

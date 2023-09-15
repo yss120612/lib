@@ -97,7 +97,6 @@ if (idx==ALARMS_COUNT-1){
 }else if(an==2){
 dt=rtc->getAlarm2();
 rtc->clearAlarm(2);
-
 idx=findAndSetNext(dt,rtc->getAlarm2Mode());
 if (idx<ALARMS_COUNT){
 ev.state=RTC_EVENT;
@@ -163,6 +162,20 @@ ev.button=idx+100;
 ev.alarm=alarms[idx];
 xQueueSend(que,&ev,portMAX_DELAY);
 }
+
+void RTCTask::setupTimer(uint16_t minutes,uint8_t idx, uint8_t act){
+if (idx>=ALARMS_COUNT) return;
+alarms[idx].active=true;
+alarms[idx].action=act;
+alarms[idx].period=ONCE_ALARM;
+DateTime dt=rtc->now();
+TimeSpan ts(minutes*60);
+dt=dt+ts;
+alarms[idx].hour=dt.hour();
+alarms[idx].minute=dt.minute();
+saveAlarm(idx);
+}
+
 
 bool RTCTask::setupAlarm(uint8_t idx, uint8_t act, uint8_t h, uint8_t m,  period_t p){
 if (idx>=ALARMS_COUNT) return false;
@@ -291,6 +304,10 @@ void RTCTask::loop()
         #endif
           refreshAlarms();
           break;
+        case ALARSETUPTIMER:
+          setupTimer(nt.packet.value,nt.packet.var,nt.packet.var);
+          refreshAlarms();
+        break;
         case RTCGETTIME:{
             ev.state=DISP_EVENT;
             ev.button=SHOWTIME;
@@ -374,13 +391,14 @@ bool RTCTask::update_time_from_inet()
   timeClient = new NTPClient(*ntpUDP, NTPServer, 3600 * TIME_OFFSET, 60000 * 60 * 24);
   timeClient->begin();
   bool result=timeClient->forceUpdate();
+  Serial.println("GetTime");
   if (result)
   {
     DateTime d(timeClient->getEpochTime());
     rtc->adjust(d);
-    #ifdef DEBUGG
+    //#ifdef DEBUGG
     Serial.println("Success update time from inet. Time is :" + rtc->now().timestamp());
-    #endif
+    //#endif
   }
     
 

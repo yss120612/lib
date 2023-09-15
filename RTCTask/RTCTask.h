@@ -5,6 +5,7 @@
 //#include "Settings.h"
 #include <WiFiUdp.h>
 #include <NtpClient.h>
+#include <SPI.h>
 #include <RTClib.h>
 #include <GlobalSettings.h>
 
@@ -25,6 +26,7 @@ protected:
     uint8_t findAndSetNext(DateTime dt, Ds3231Alarm1Mode mode);
     uint8_t findAndSetNext(DateTime dt, Ds3231Alarm2Mode mode);
     bool setupAlarm(uint8_t idx, uint8_t act, uint8_t h, uint8_t m,  period_t p);
+    void setupTimer(uint16_t minutes,uint8_t idx, uint8_t act);
     uint8_t refreshAlarms();
     void resetAlarms();
     
