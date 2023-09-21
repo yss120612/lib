@@ -23,18 +23,19 @@ public:
     return _task != NULL;
   }
   bool isRunning();
-  void pause();
-  void resume();
+  //void pause();
+  //void resume();
   void destroy();
   void notify(uint32_t value);
   void notify(notify_t nt);
   TaskHandle_t getHandle(){ return _task;}
   static void lock();
   static void unlock();
-
+  virtual void pause();
+  virtual void resume();
 protected:
   enum flag_t : uint8_t { FLAG_DESTROYING = 1, FLAG_DESTROYED = 2, FLAG_USER = 4 };
-
+  
   virtual void setup() {};
   virtual void loop() = 0;
   virtual void cleanup() {};

@@ -324,7 +324,8 @@ static uint8_t crc8(uint8_t *buffer, uint16_t size) {
 #define ALARMACTIVEPRINT 12
 #define ALARMSPRINT 11
 #define ALARMSRESET 13
-#define ALARSETUPTIMER 14
+#define RTCSETUPTIMER 14
+#define RTCALARMRESET 15
 
 #define RTCGETTIME 10
 

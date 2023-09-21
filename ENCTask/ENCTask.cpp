@@ -4,14 +4,14 @@
 //#include "Events.h"
 
 void ENCTask::setup(){
- gpio_set_direction((gpio_num_t)btn_pin, GPIO_MODE_INPUT);
+ gpio_set_direction(btn_pin, GPIO_MODE_INPUT);
  btn_semaphore=xSemaphoreCreateBinary();
- attachInterrupt(digitalPinToInterrupt(btn_pin),std::bind(&ENCTask::btnISR, this),CHANGE);
+ attachInterrupt(digitalPinToInterrupt((uint8_t)btn_pin),std::bind(&ENCTask::btnISR, this),CHANGE);
  if (enc1_pin>0 && enc2_pin>0)
  {
- gpio_set_direction((gpio_num_t)enc1_pin, GPIO_MODE_INPUT);
- gpio_set_direction((gpio_num_t)enc2_pin, GPIO_MODE_INPUT);
- attachInterrupt(digitalPinToInterrupt(enc1_pin),std::bind(&ENCTask::encISR, this),CHANGE);
+ gpio_set_direction(enc1_pin, GPIO_MODE_INPUT);
+ gpio_set_direction(enc2_pin, GPIO_MODE_INPUT);
+ attachInterrupt(digitalPinToInterrupt((uint8_t)enc1_pin),std::bind(&ENCTask::encISR, this),CHANGE);
  }
  
  btn.xdbl=0;
@@ -44,8 +44,8 @@ void ENCTask::loop(){
     if (xSemaphoreTake(btn_semaphore,portMAX_DELAY)){
         event_t ev;
         if (is_enc){//encoder semaphore
-        bool s1=gpio_get_level((gpio_num_t)enc1_pin);
-        bool s2=gpio_get_level((gpio_num_t)enc2_pin);
+        bool s1=gpio_get_level(enc1_pin);
+        bool s2=gpio_get_level(enc2_pin);
         if (s1){
         ev.state=ENCODER_EVENT;    
         ev.button=1;
@@ -54,7 +54,7 @@ void ENCTask::loop(){
         }
         }
         else {//button semaphore
-        bool btnNow=gpio_get_level((gpio_num_t)btn_pin)==btn.level;
+        bool btnNow=gpio_get_level(btn_pin)==btn.level;
         unsigned long ms=millis();
         if (btn.pressed!=btnNow) 
         {
@@ -100,8 +100,8 @@ void ENCTask::timerCallback(){
 }
 
 void ENCTask::cleanup(){
-if (enc1_pin>0) detachInterrupt((gpio_num_t)enc1_pin);
-detachInterrupt((gpio_num_t)btn_pin);
+if (enc1_pin!=GPIO_NUM_NC) detachInterrupt((uint8_t)enc1_pin);
+detachInterrupt((uint8_t)btn_pin);
 esp_timer_stop(_timer);
 esp_timer_delete(_timer);
 };

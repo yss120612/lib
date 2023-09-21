@@ -16,7 +16,7 @@ struct button_t {
 
 class ENCTask: public Task{
 public:    
-ENCTask(const char *name, uint32_t stack, QueueHandle_t q,uint8_t bt,uint8_t enc1, uint8_t enc2,bool lvl):Task(name, stack){que=q;btn.level=lvl;btn_pin=bt,enc1_pin=enc1;enc2_pin=enc2;};
+ENCTask(const char *name, uint32_t stack, QueueHandle_t q,gpio_num_t bt,gpio_num_t enc1, gpio_num_t enc2,bool lvl):Task(name, stack){que=q;btn.level=lvl;btn_pin=bt,enc1_pin=enc1;enc2_pin=enc2;};
 
 protected:
 void cleanup() override;
@@ -30,7 +30,7 @@ button_t btn;
 bool is_enc;
 esp_timer_handle_t _timer;
 void timerCallback();
-uint8_t btn_pin,enc1_pin,enc2_pin;    
+gpio_num_t btn_pin,enc1_pin,enc2_pin;    
 
 };
 

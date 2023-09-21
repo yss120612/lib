@@ -29,7 +29,7 @@ protected:
     void setupTimer(uint16_t minutes,uint8_t idx, uint8_t act);
     uint8_t refreshAlarms();
     void resetAlarms();
-    
+    void resetAlarm(uint8_t n);
     void alarm(alarm_t &a);
  
 

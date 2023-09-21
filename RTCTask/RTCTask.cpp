@@ -108,6 +108,14 @@ idx=refreshAlarms();
 }
 }
 
+void RTCTask::resetAlarm(uint8_t n){
+  if (n<ALARMS_COUNT){
+    alarms[n].active=false;
+    saveAlarm(n);
+    refreshAlarms();
+  }
+}
+
 uint8_t RTCTask::findAndSetNext(DateTime dt, Ds3231Alarm1Mode mode){
   uint8_t result=ALARMS_COUNT;
 for (int i=0;i<ALARMS_COUNT;i++){
@@ -304,9 +312,12 @@ void RTCTask::loop()
         #endif
           refreshAlarms();
           break;
-        case ALARSETUPTIMER:
+        case RTCSETUPTIMER:
           setupTimer(nt.packet.value,nt.packet.var,nt.packet.var);
           refreshAlarms();
+        break;
+        case RTCALARMRESET:
+          resetAlarm(nt.packet.var);
         break;
         case RTCGETTIME:{
             ev.state=DISP_EVENT;
