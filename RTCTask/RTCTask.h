@@ -31,7 +31,7 @@ protected:
     void resetAlarms();
     void resetAlarm(uint8_t n);
     void alarm(alarm_t &a);
- 
+    int minutesLeft(uint8_t timerNo);
 
     void alarmFired(uint8_t aNo);
     bool update_time_from_inet();

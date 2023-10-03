@@ -44,7 +44,8 @@ enum buttonstate_t : uint8_t
     HEATER_EVENT,
     TERMOMETR_EVENT,
     WS_EVENT,
-    MENU_EVENT
+    MENU_EVENT,
+    PROCESS_EVENT
 };
 
 enum period_t : uint8_t
@@ -326,6 +327,8 @@ static uint8_t crc8(uint8_t *buffer, uint16_t size) {
 #define ALARMSRESET 13
 #define RTCSETUPTIMER 14
 #define RTCALARMRESET 15
+#define RTCALARMTIMELEFT_ASK 16
+#define RTCALARMTIMELEFT_TAKE 17
 
 #define RTCGETTIME 10
 

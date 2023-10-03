@@ -35,6 +35,14 @@ void RTCTask::cleanup()
 delete rtc;
 }
 
+int RTCTask::minutesLeft(uint8_t timerNo){
+ if (timerNo>2) return -1;
+  DateTime dt=timerNo==1?rtc->getAlarm1():rtc->getAlarm2();
+  DateTime  dt0=rtc->now();
+  if (dt.isValid() && dt0.isValid()) return (dt.unixtime()-dt0.unixtime())/60+1;
+  return -1;
+}
+
 //установка конкретного будильника
 void RTCTask::alarm(alarm_t &a){
   a.active=true;
@@ -222,7 +230,7 @@ return true;
 
 //find and set next nearest alarm
 uint8_t RTCTask::refreshAlarms(){
-rtc->clearAlarm(1);
+//rtc->clearAlarm(1);
 rtc->clearAlarm(2);
 uint8_t index=ALARMS_COUNT;
 uint16_t amin,nmin,cdiff,min_diff=WEEK+1;//week and one minutes
@@ -303,7 +311,6 @@ void RTCTask::loop()
         switch (nt.title)
         {
         case ALARMSETUP:
-        
           setupAlarm(nt.alarm.action,nt.alarm.action,nt.alarm.hour,nt.alarm.minute,nt.alarm.period);
           #ifdef DEBUGG
           portENTER_CRITICAL(&_mutex);
@@ -315,6 +322,16 @@ void RTCTask::loop()
         case RTCSETUPTIMER:
           setupTimer(nt.packet.value,nt.packet.var,nt.packet.var);
           refreshAlarms();
+        break;
+        case RTCALARMTIMELEFT_ASK:
+        {
+            ev.state=RTC_EVENT;
+            ev.button=RTCALARMTIMELEFT_TAKE;
+            ev.count=nt.packet.var;
+            int tl=minutesLeft(nt.packet.var);
+            ev.data=tl>=0?tl:999;
+            xQueueSend(que,&ev,portMAX_DELAY);
+        }
         break;
         case RTCALARMRESET:
           resetAlarm(nt.packet.var);
