@@ -37,7 +37,7 @@ void reset_memory();
 
 static void MemTimerCb(TimerHandle_t tm);
 void timerCallback();
-
+void * saved_object;
 QueueHandle_t que;
 MessageBufferHandle_t alarm_mess;
 MessageBufferHandle_t web_mess;
