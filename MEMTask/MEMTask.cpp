@@ -5,14 +5,36 @@ void MEMTask::setup()
 {
 	Wire.begin();
 	read_state();
-	_timer=xTimerCreate("MemTimer",pdMS_TO_TICKS( WAIT_BEFORE_WRITE),pdFALSE , static_cast<void*>(this), MemTimerCb);
+	//_timer=xTimerCreate("MemTimer",pdMS_TO_TICKS( WAIT_BEFORE_WRITE),pdFALSE , static_cast<void*>(this), MemTimerCb);
+	_timer=NULL;
 }
 
 void MEMTask::cleanup()
 {
-	xTimerStop(_timer,0);
-	xTimerDelete(_timer,0);
+	
 }
+
+
+void MEMTask::pause()
+{
+     if (xTimerDelete(_timer,0)==pdFAIL)
+     {
+         Serial.println("Timer stop error");
+     }
+    _timer=NULL;
+     Task::pause();    
+}
+
+void MEMTask::resume()
+{
+	Task::resume();
+    if (!_timer) _timer=xTimerCreate("Memory",pdMS_TO_TICKS( WAIT_BEFORE_WRITE ),pdFALSE , static_cast<void*>(this), MemTimerCb);
+    if (xTimerStart(_timer,0)==pdFAIL)
+    {
+        Serial.println("Timer start error");
+    }
+ }
+
 
 void MEMTask::reset_memory(){
 uint8_t i;
@@ -28,7 +50,6 @@ uint8_t i;
 			sstate.alr[i].wday = 0;
 		}
 		sstate.version = VER;
-		//write_state();
 		xTimerStart(_timer,0);
 }
 
@@ -58,7 +79,6 @@ void MEMTask::read_state()
 
 void MEMTask::write_state()
 {
-	//if ((xEventGroupGetBits(flg) & FLAG_MEMREADY)!=FLAG_MEMREADY) return;
 	sstate.crc=crc8((uint8_t *)&sstate, sizeof(sstate)-1);
 	write(0, (uint8_t *)&sstate, sizeof(sstate));
 }

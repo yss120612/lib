@@ -5,6 +5,8 @@ void RTCTask::setup()
 {
 rtc= new RTC_DS3231();
 rtc->begin();
+DateTime dt(24,2,29,9,10,0);
+rtc->adjust(dt);
 fast_time_interval=true;
 last_sync=0;
 vTaskDelay(pdMS_TO_TICKS(5000));
@@ -36,16 +38,43 @@ delete rtc;
 }
 
 int RTCTask::minutesLeft(uint8_t timerNo){
- if (timerNo>2) return -1;
-  DateTime  dt=timerNo==1?rtc->getAlarm1():rtc->getAlarm2();
+ if (timerNo>=ALARMS_COUNT) return -1;
+  if (!alarms[timerNo].active) return -1;
+  DateTime  dt=rtc->getAlarm2();
   DateTime  dt0=rtc->now();
-  DateTime  dt1(dt0.year(),dt0.month(),dt0.day(),dt.hour(),dt.minute());
-  if (dt1<dt0){
-    TimeSpan ts(1,0,0,0);
-    dt1=dt1+ts;
+  uint8_t d,m;
+  uint16_t y;
+  d=dt0.day();
+  m=dt0.month();
+  y=dt0.year();
+  if (dt.hour()<dt0.hour()||dt.hour()==dt0.hour()&&dt.minute()<dt0.minute()){
+    switch (dt0.month()){
+      case 1:
+      case 3:
+      case 5:
+      case 7:
+      case 8:
+      case 10:
+        if (d==31){d=1;m++;} else d++;
+      break;
+      case 2:
+        if (d==(y%4?28:29)){d=1;m++;} else d++;
+      break;
+      case 4:
+      case 6:
+      case 9:
+      case 11:
+        if (d==30){d=1;m+=1;} else d++;
+      break;
+      case 12:
+        if (d==31){d=1;m=1;y++;} else d++;
+      break;
+    }
   }
-  Serial.println(dt1.timestamp());
-  Serial.println(dt0.timestamp());
+  DateTime  dt1(y,m,d,dt.hour(),dt.minute());
+  
+  // Serial.println(dt1.timestamp());
+  // Serial.println(dt0.timestamp());
   if (dt.isValid() && dt1.isValid()) return (dt1.unixtime()-dt0.unixtime())/60+1;
   return -1;
 }
@@ -332,8 +361,7 @@ void RTCTask::loop()
             ev.button=RTCTIMELEFT_TAKE;
             ev.count=nt.packet.var;
             int tl=minutesLeft(nt.packet.var);
-            Serial.println(tl); 
-            ev.data=tl>=0?tl:999;
+            ev.data=tl>=0?tl:9999;
             xQueueSend(que,&ev,portMAX_DELAY);
         }
         break;

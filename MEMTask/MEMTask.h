@@ -11,12 +11,15 @@ class MEMTask: public Task
 {
 public:
 MEMTask(const char *name, uint32_t stack,QueueHandle_t q,MessageBufferHandle_t a,MessageBufferHandle_t w, uint8_t v,uint8_t adr,uint8_t ofs):Task(name, stack){que=q;alarm_mess=a;web_mess=w;VER=v;ADDRESS=adr,OFFSET=ofs;}
+void pause() override;
+void resume() override;
 
 protected:
 
 void cleanup() override;
 void setup() override;
 void loop() override;
+
 void read(uint16_t index, uint8_t* buf, uint16_t len);
 void write(uint16_t index, const uint8_t* buf, uint16_t len);
 void read_state();
