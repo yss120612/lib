@@ -224,9 +224,9 @@ void RTCTask::setupTimer(uint16_t minutes,uint8_t idx, uint8_t act){
 }
 
 
-bool RTCTask::setupAlarm(uint8_t idx, uint8_t act, uint8_t h, uint8_t m,  period_t p){
+bool RTCTask::setupAlarm(uint8_t idx, uint8_t act, uint8_t h, uint8_t m,  period_t p,bool active,bool save){
 if (idx>=ALARMS_COUNT) return false;
-alarms[idx].active=true;
+alarms[idx].active=active;
 alarms[idx].action=act;
 alarms[idx].minute=m;
 alarms[idx].period=p;
@@ -254,7 +254,7 @@ else if (nmin>=amin) {dw=dw==6?0:6;}
 
 alarms[idx].hour=h;
 alarms[idx].wday=dw;
-saveAlarm(idx);
+if (save) saveAlarm(idx);
 return true;
 }
 
@@ -342,6 +342,7 @@ void RTCTask::loop()
         switch (nt.title)
         {
         case ALARMSETUP:
+
           setupAlarm(nt.alarm.action,nt.alarm.action,nt.alarm.hour,nt.alarm.minute,nt.alarm.period);
           #ifdef DEBUGG
           portENTER_CRITICAL(&_mutex);
@@ -350,8 +351,12 @@ void RTCTask::loop()
         #endif
           refreshAlarms();
           break;
+        case ALARMSETFROMMEM:
+          setupAlarm(nt.alarm.action,nt.alarm.action,nt.alarm.hour,nt.alarm.minute,nt.alarm.period,nt.alarm.active,false);
+          if(nt.alarm.active) refreshAlarms();
+          break;
+
         case RTCSETUPTIMER:
-          
           setupTimer(nt.packet.value,nt.packet.var,nt.packet.var);
           refreshAlarms();
         break;

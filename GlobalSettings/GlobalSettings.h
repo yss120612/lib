@@ -323,6 +323,7 @@ static uint8_t crc8(uint8_t *buffer, uint16_t size) {
 #define RTCTIMELEFT_TAKE 17
 #define ALARMSETUP 18
 #define RTCALARMFIRED 19
+#define ALARMSETFROMMEM 20
 
 
 
@@ -337,5 +338,75 @@ static uint8_t crc8(uint8_t *buffer, uint16_t size) {
 #define ALARMS_COUNT 10
 #define LEDS_COUNT 4
 #define RELAYS_COUNT 4
+
+
+#define MEM_ASK_00 100 //прием
+#define MEM_ASK_01 101
+#define MEM_ASK_02 102
+#define MEM_ASK_03 103
+#define MEM_ASK_04 104
+#define MEM_ASK_05 105
+#define MEM_ASK_06 106
+#define MEM_ASK_07 107
+#define MEM_ASK_08 108
+#define MEM_ASK_09 109
+#define MEM_ASK_10 110
+#define MEM_ASK_11 111
+#define MEM_ASK_12 112
+#define MEM_ASK_13 113
+#define MEM_ASK_14 114
+#define MEM_ASK_15 115
+#define MEM_ASK_16 116
+#define MEM_ASK_17 117
+#define MEM_ASK_18 118
+#define MEM_ASK_19 119
+#define MEM_ASK_20 120
+
+#define MEM_READ_00 50 //отправка
+#define MEM_READ_01 51
+#define MEM_READ_02 52
+#define MEM_READ_03 53
+#define MEM_READ_04 54
+#define MEM_READ_05 55
+#define MEM_READ_06 56
+#define MEM_READ_07 57
+#define MEM_READ_08 58
+#define MEM_READ_09 59
+#define MEM_READ_10 60
+#define MEM_READ_11 61
+#define MEM_READ_12 62
+#define MEM_READ_13 63
+#define MEM_READ_14 64
+#define MEM_READ_15 65
+#define MEM_READ_16 66
+#define MEM_READ_17 67
+#define MEM_READ_18 68
+#define MEM_READ_19 69
+#define MEM_READ_10 70
+
+
+
+#define MEM_SAVE_00 200 //прием
+#define MEM_SAVE_01 201
+#define MEM_SAVE_02 202
+#define MEM_SAVE_03 203
+#define MEM_SAVE_04 204
+#define MEM_SAVE_05 205
+#define MEM_SAVE_06 206
+#define MEM_SAVE_07 207
+#define MEM_SAVE_08 208
+#define MEM_SAVE_09 209
+#define MEM_SAVE_10 210
+#define MEM_SAVE_11 211
+#define MEM_SAVE_12 212
+#define MEM_SAVE_13 213
+#define MEM_SAVE_14 214
+#define MEM_SAVE_15 215
+#define MEM_SAVE_16 216
+#define MEM_SAVE_17 217
+#define MEM_SAVE_18 218
+#define MEM_SAVE_19 219
+#define MEM_SAVE_20 220
+
 
 #endif
