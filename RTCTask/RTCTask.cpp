@@ -210,7 +210,7 @@ void RTCTask::saveAlarm(uint8_t idx){
 if (alarms[idx].period==EVERYMINUTE_ALARM) return;
 event_t ev;
 ev.state=MEM_EVENT;
-ev.button=idx+100;
+ev.button=MEM_SAVE_00+idx;
 ev.alarm=alarms[idx];
 xQueueSend(que,&ev,portMAX_DELAY);
 }
