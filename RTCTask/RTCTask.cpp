@@ -309,23 +309,23 @@ return index;
 void RTCTask::loop()
 {
       event_t ev;
-      SystemState_t sst;
-      if (xMessageBufferReceive(alarm_mess,&sst,SSTATE_LENGTH,!init_complete?pdMS_TO_TICKS(1000):0)==SSTATE_LENGTH){
-      memcpy(alarms,sst.alr,sizeof(alarm_t)*ALARMS_COUNT);
-      refreshAlarms();  
-      init_complete=true;
+      //SystemState_t sst;
+      //if (xMessageBufferReceive(alarm_mess,&sst,SSTATE_LENGTH,!init_complete?pdMS_TO_TICKS(1000):0)==SSTATE_LENGTH){
+      //memcpy(alarms,sst.alr,sizeof(alarm_t)*ALARMS_COUNT);
+    //   refreshAlarms();  
+    //   init_complete=true;
       
-      ev.state=MEM_EVENT;//init other devices
-      ev.button=INITRELAYS;
-      ev.data=sst.rel[0] & 1 | sst.rel[1]<<1 & 2 | sst.rel[2]<<2 & 4 | sst.rel[3]<<3 & 8; 
-      xQueueSend(que,&ev,portMAX_DELAY);
-      ev.button=INITLEDS;
-      //ev.data=sst.br[2].value<<24 & 0xFF000000 | sst.br[1].value<<16 & 0x00FF0000 | sst.br[0].value << 8 & 0x0000FF00 | sst.br[2].stste << 4 & 0x000000F0 | sst.br[1].stste  & 0x0000000F;
-      //ev.count=sst.br[0].stste;
-      ev.data= sst.br[3].value<<24 & 0xFF000000 | sst.br[2].value<<16 & 0x00FF0000 | sst.br[1].value<<8 & 0x0000FF00 | sst.br[0].value & 0x000000FF;
-      ev.count=sst.br[3].stste<<12 & 0xF000     | sst.br[2].stste<<8 &  0x0F00     | sst.br[1].stste<<4 & 0x00F0     | sst.br[0].stste & 0x000F;
-      xQueueSend(que,&ev,portMAX_DELAY);
-    }
+    //   ev.state=MEM_EVENT;//init other devices
+    //   ev.button=INITRELAYS;
+    //   ev.data=sst.rel[0] & 1 | sst.rel[1]<<1 & 2 | sst.rel[2]<<2 & 4 | sst.rel[3]<<3 & 8; 
+    //   xQueueSend(que,&ev,portMAX_DELAY);
+    //   ev.button=INITLEDS;
+    //   //ev.data=sst.br[2].value<<24 & 0xFF000000 | sst.br[1].value<<16 & 0x00FF0000 | sst.br[0].value << 8 & 0x0000FF00 | sst.br[2].stste << 4 & 0x000000F0 | sst.br[1].stste  & 0x0000000F;
+    //   //ev.count=sst.br[0].stste;
+    //   ev.data= sst.br[3].value<<24 & 0xFF000000 | sst.br[2].value<<16 & 0x00FF0000 | sst.br[1].value<<8 & 0x0000FF00 | sst.br[0].value & 0x000000FF;
+    //   ev.count=sst.br[3].stste<<12 & 0xF000     | sst.br[2].stste<<8 &  0x0F00     | sst.br[1].stste<<4 & 0x00F0     | sst.br[0].stste & 0x000F;
+    //   xQueueSend(que,&ev,portMAX_DELAY);
+    // }
 
     if (init_complete && need_watch && !set_clock)  {
      set_clock=true;

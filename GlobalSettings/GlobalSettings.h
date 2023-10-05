@@ -91,9 +91,7 @@ struct __attribute__((__packed__)) relState_t
 };
 
 
-#define ALARMS_COUNT 10
-#define LEDS_COUNT 4
-#define RELAYS_COUNT 4
+
 
 const uint16_t WEEK = 10080; // minutes in week
 const uint16_t DAY = 1440;   // minutes in day
@@ -120,16 +118,9 @@ struct __attribute__((__packed__)) led_state_t
   blinkmode_t stste : 8;
 };
 
-struct __attribute__((__packed__)) SystemState_t
-{
-    uint8_t version : 8;
-    bool rel[RELAYS_COUNT];
-    led_state_t br[LEDS_COUNT];
-    alarm_t alr[ALARMS_COUNT];
-    uint8_t crc;
-};
+//extern struct  SystemState_t;
 
-const uint16_t SSTATE_LENGTH = sizeof(SystemState_t);
+
 
 static void getNext(alarm_t &at)
 {
@@ -343,5 +334,8 @@ static uint8_t crc8(uint8_t *buffer, uint16_t size) {
 
 #define SHOWTIME 1
 
+#define ALARMS_COUNT 10
+#define LEDS_COUNT 4
+#define RELAYS_COUNT 4
 
 #endif
