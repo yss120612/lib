@@ -5,8 +5,8 @@ void RTCTask::setup()
 {
 rtc= new RTC_DS3231();
 rtc->begin();
-DateTime dt(24,2,29,9,10,0);
-rtc->adjust(dt);
+// DateTime dt(24,2,29,9,10,0);
+// rtc->adjust(dt);
 fast_time_interval=true;
 last_sync=0;
 vTaskDelay(pdMS_TO_TICKS(5000));
@@ -18,16 +18,21 @@ set_watch=false;
 void RTCTask::initAlarms(){
 event_t e;
 e.state=MEM_EVENT;
-e.button=200;
-xQueueSend(que,&e,portMAX_DELAY);
+e.button=MEM_ASK_13;
+ xQueueSend(que,&e,portMAX_DELAY);
+// for (uint8_t i;i<ALARMS_COUNT;i++)
+// {
+//  e.button=MEM_ASK_00+i;
+//  xQueueSend(que,&e,portMAX_DELAY);
+// }
 }
 
 void RTCTask::resetAlarms(){
   event_t e;
-  e.state=MEM_EVENT;
-  e.button=201;
-  init_complete=false;
-  xQueueSend(que,&e,portMAX_DELAY);
+  // e.state=MEM_EVENT;
+  // e.button=201;
+  // init_complete=false;
+  // xQueueSend(que,&e,portMAX_DELAY);
 }
 
 
