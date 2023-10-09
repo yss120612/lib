@@ -15,6 +15,7 @@ MEMTask(const char *name, uint32_t stack,QueueHandle_t q,void (*func)(T1 *),bool
     que=q;alarm_mess=a;web_mess=w;VER=v;ADDRESS=adr,OFFSET=ofs;
     func_reset=func;
     process_notify=fnotify;
+	_timer=NULL;
     }
 
 void pause() override
@@ -29,8 +30,9 @@ void pause() override
 
 void resume() override
 {
+	if (!_timer) _timer=xTimerCreate("Memory",pdMS_TO_TICKS( WAIT_BEFORE_WRITE ),pdFALSE , static_cast<void*>(this), MemTimerCb);
 	Task::resume();
-    if (!_timer) _timer=xTimerCreate("Memory",pdMS_TO_TICKS( WAIT_BEFORE_WRITE ),pdFALSE , static_cast<void*>(this), MemTimerCb);
+    //if (!_timer) _timer=xTimerCreate("Memory",pdMS_TO_TICKS( WAIT_BEFORE_WRITE ),pdFALSE , static_cast<void*>(this), MemTimerCb);
     // if (xTimerStart(_timer,0)==pdFAIL)
     // {
     //     Serial.println("Timer start error");
@@ -50,6 +52,7 @@ static void MemTimerCb(TimerHandle_t tm){
 void timerCallback()
 {
 	write_state();
+	
 };
 
 void (*func_reset)(T1 *);
@@ -68,7 +71,7 @@ void setup() override
 {
 	 Wire.begin();
 	 read_state();
-	 _timer=NULL;
+	 
 };
 
 void cleanup() override
@@ -103,11 +106,12 @@ void read_state()
 {
 	read(0, (uint8_t *)&sstate, sizeof(T1));
 	uint8_t crc=crc8((uint8_t *)&sstate,sizeof(T1));
-
+	
 	if (crc!=0)//second attempt to read
 	{
 		read(0, (uint8_t *)&sstate, sizeof(T1));
 		crc=crc8((uint8_t *)&sstate,sizeof(T1));
+		
 	}
 
 	#ifdef DEBUGG

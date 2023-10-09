@@ -17,14 +17,14 @@ set_watch=false;
 
 void RTCTask::initAlarms(){
 event_t e;
-e.state=MEM_EVENT;
-e.button=MEM_ASK_13;
- xQueueSend(que,&e,portMAX_DELAY);
-// for (uint8_t i;i<ALARMS_COUNT;i++)
-// {
-//  e.button=MEM_ASK_00+i;
-//  xQueueSend(que,&e,portMAX_DELAY);
-// }
+//e.state=MEM_EVENT;
+//e.button=MEM_ASK_13;
+ //xQueueSend(que,&e,portMAX_DELAY);
+ for (uint8_t i;i<ALARMS_COUNT;i++)
+ {
+  e.button=MEM_ASK_00+i;
+  xQueueSend(que,&e,portMAX_DELAY);
+ }
 }
 
 void RTCTask::resetAlarms(){
