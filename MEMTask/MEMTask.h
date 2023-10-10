@@ -11,7 +11,7 @@ template< class T1 >
 class MEMTask: public Task
 {
 public:
-MEMTask(const char *name, uint32_t stack,QueueHandle_t q,void (*func)(T1 *),bool(* fnotify)(T1*,event_t *,notify_t), MessageBufferHandle_t a,MessageBufferHandle_t w, uint8_t v,uint8_t adr,uint8_t ofs):Task(name, stack){
+MEMTask(const char *name, uint32_t stack,QueueHandle_t q,void (*func)(T1 *),uint8_t(* fnotify)(T1*,event_t *,notify_t), MessageBufferHandle_t a,MessageBufferHandle_t w, uint8_t v,uint8_t adr,uint8_t ofs):Task(name, stack){
     que=q;alarm_mess=a;web_mess=w;VER=v;ADDRESS=adr,OFFSET=ofs;
     func_reset=func;
     process_notify=fnotify;
@@ -56,7 +56,7 @@ void timerCallback()
 };
 
 void (*func_reset)(T1 *);
-bool (*process_notify) (T1 *, event_t *, notify_t);
+uint8_t (*process_notify) (T1 *, event_t *, notify_t);
 
 QueueHandle_t que;
 MessageBufferHandle_t alarm_mess;
@@ -88,9 +88,12 @@ event_t ev;
 notify_t nt;
 if (xTaskNotifyWait(0, 0, &command, portMAX_DELAY))	{
 	memcpy(&nt,&command,sizeof(command));
-	if (process_notify(&sstate,&ev,nt)) {
-        xQueueSend(que,&nt,0);
-    }else{
+	//process_notify=1 mem_read
+	//process_notify=2 mem_ask
+	//process_notify=3 mem_write
+	if (process_notify(&sstate,&ev,nt)==2) {
+        xQueueSend(que,&ev,0);
+    }else if (process_notify(&sstate,&ev,nt)==3){
         xTimerStart(_timer,0);
     }
 }

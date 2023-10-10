@@ -382,7 +382,7 @@ static uint8_t crc8(uint8_t *buffer, uint16_t size) {
 #define MEM_READ_17 67
 #define MEM_READ_18 68
 #define MEM_READ_19 69
-#define MEM_READ_10 70
+#define MEM_READ_20 70
 
 
 
