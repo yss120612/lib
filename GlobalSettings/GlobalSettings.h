@@ -45,7 +45,8 @@ enum buttonstate_t : uint8_t
     TERMOMETR_EVENT,
     WS_EVENT,
     MENU_EVENT,
-    PROCESS_EVENT
+    PROCESS_EVENT,
+    TELEGRAM_EVENT
 };
 
 enum period_t : uint8_t

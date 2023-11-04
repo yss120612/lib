@@ -14,11 +14,13 @@ void WiFiTask::setup()
   WiFi.disconnect();
   xEventGroupClearBits(flg, FLAG_WIFI);
   index=0;
+
 }
 
 void WiFiTask::cleanup()
 {
   WiFi.disconnect();
+
 }
 
 void WiFiTask::wifiOnEvent(WiFiEvent_t event)
@@ -45,6 +47,8 @@ void WiFiTask::wifiOnEvent(WiFiEvent_t event)
     break;
   }
 }
+
+
 
 void WiFiTask::loop()
 {
@@ -76,6 +80,7 @@ void WiFiTask::loop()
       Serial.print("Connected to WiFi with IP ");
       Serial.println(WiFi.localIP());
       portEXIT_CRITICAL(&_mutex);
+      
 //#endif
       xEventGroupSetBits(flg, FLAG_WIFI);
       result.button = LED_CONNECTED;
