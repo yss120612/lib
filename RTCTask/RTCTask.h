@@ -18,8 +18,11 @@ static const char * NTPServer = "pool.ntp.org";
 
 class RTCTask: public Task{
 public:   
-    RTCTask(const char *name, uint32_t stack,EventGroupHandle_t f,QueueHandle_t q,MessageBufferHandle_t m,MessageBufferHandle_t a):Task(name, stack){que=q;flg=f;disp_mess=m;alarm_mess=a;}
-
+    RTCTask(const char *name, uint32_t stack,EventGroupHandle_t f,QueueHandle_t q,MessageBufferHandle_t m,MessageBufferHandle_t a):Task(name, stack)
+    {que=q;flg=f;disp_mess=m;alarm_mess=a;init_complete=false;}
+    void setNeedWatch(){need_watch=true;};
+    void resetAlarms();
+    void init(){init_complete=true;};
 protected:
     void initAlarms();
     void saveAlarm(uint8_t idx);
@@ -28,7 +31,6 @@ protected:
     bool setupAlarm(uint8_t idx, uint8_t act, uint8_t h, uint8_t m,  period_t p,bool active=true,bool save=true);
     void setupTimer(uint16_t minutes,uint8_t idx, uint8_t act);
     uint8_t refreshAlarms();
-    void resetAlarms();
     void resetAlarm(uint8_t n);
     void alarm(alarm_t &a);
     int minutesLeft(uint8_t timerNo);
@@ -38,7 +40,7 @@ protected:
     void cleanup() override;
     void setup() override;
     void loop() override;
-    void setNeedWatch(){need_watch=true;};
+    
     String printTime();
     int32_t last_sync;
     boolean fast_time_interval; 
@@ -52,6 +54,6 @@ protected:
     bool init_complete;
     bool set_clock;
     bool need_watch;// create everyminutes event at 10 alarm
-    bool set_watch;
+    //bool set_watch;
 };
 #endif 

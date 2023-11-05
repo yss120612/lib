@@ -11,15 +11,11 @@ fast_time_interval=true;
 last_sync=0;
 vTaskDelay(pdMS_TO_TICKS(5000));
 initAlarms();
-init_complete=false;
-set_watch=false;
+set_clock=false;
 }
 
 void RTCTask::initAlarms(){
 event_t e;
-//e.state=MEM_EVENT;
-//e.button=MEM_ASK_13;
- //xQueueSend(que,&e,portMAX_DELAY);
  for (uint8_t i;i<ALARMS_COUNT;i++)
  {
   e.button=MEM_ASK_00+i;
@@ -29,10 +25,10 @@ event_t e;
 
 void RTCTask::resetAlarms(){
   event_t e;
-  // e.state=MEM_EVENT;
-  // e.button=201;
-  // init_complete=false;
-  // xQueueSend(que,&e,portMAX_DELAY);
+  for (uint8_t i;i<ALARMS_COUNT;i++)
+ {
+  alarms[i].active=false;
+ }
 }
 
 
@@ -42,6 +38,8 @@ void RTCTask::cleanup()
 delete rtc;
 }
 
+//возвращает время до срабатывания таймера № в минутах
+//если что то не так -1
 int RTCTask::minutesLeft(uint8_t timerNo){
  if (timerNo>=ALARMS_COUNT) return -1;
   if (!alarms[timerNo].active) return -1;
@@ -77,14 +75,12 @@ int RTCTask::minutesLeft(uint8_t timerNo){
     }
   }
   DateTime  dt1(y,m,d,dt.hour(),dt.minute());
-  
-  // Serial.println(dt1.timestamp());
-  // Serial.println(dt0.timestamp());
   if (dt.isValid() && dt1.isValid()) return (dt1.unixtime()-dt0.unixtime())/60+1;
   return -1;
 }
 
 //установка конкретного будильника
+//(конкретное возведение)
 void RTCTask::alarm(alarm_t &a){
   a.active=true;
   DateTime dt;
@@ -118,7 +114,7 @@ void RTCTask::alarm(alarm_t &a){
 
 
 
-
+//сработал будильник №
 void RTCTask::alarmFired(uint8_t an){
 
 DateTime dt;
@@ -126,12 +122,13 @@ event_t ev;
 uint8_t idx;
 
 if (an==1){
-//Serial.println("Alarm 1 fired");
 rtc->clearAlarm(1);
 dt=rtc->getAlarm1();
 idx=findAndSetNext(dt,rtc->getAlarm1Mode());
 //Serial.println("Alarm fired");
 if (idx==ALARMS_COUNT-1){
+  //if (idx==1){
+    
     ev.button=1;
     dt=rtc->now();
     ev.alarm.hour=dt.hour();
@@ -142,6 +139,7 @@ if (idx==ALARMS_COUNT-1){
     ev.state=(buttonstate_t)(dt.year()-2000);
     xMessageBufferSend(disp_mess, &ev, sizeof(event_t), portMAX_DELAY);
     idx=refreshAlarms();
+    
   }
 }else if(an==2){
 dt=rtc->getAlarm2();
@@ -157,19 +155,23 @@ idx=refreshAlarms();
 }
 }
 
+//сброс будильника №
 void RTCTask::resetAlarm(uint8_t n){
   if (n<ALARMS_COUNT){
+    
     alarms[n].active=false;
     saveAlarm(n);
     refreshAlarms();
   }
 }
 
+//поиск сработавшего аларма (будильник №1)
+//и пересчет его нового значения если он переодический
 uint8_t RTCTask::findAndSetNext(DateTime dt, Ds3231Alarm1Mode mode){
   uint8_t result=ALARMS_COUNT;
+  
 for (int i=0;i<ALARMS_COUNT;i++){
   if (!alarms[i].active) continue;
-  
   if (mode==DS3231_A1_Second){
       result=i;
       break;
@@ -177,15 +179,15 @@ for (int i=0;i<ALARMS_COUNT;i++){
 }
 if (result<ALARMS_COUNT) 
 {
-getNext(alarms[result]);
-//saveAlarm(result);
+ getNext(alarms[result]);
 }
 
 return result;
 }
 
 
-//find fired alarm and set for this alarm next period
+//поиск сработавшего аларма (будильник №2)
+//и пересчет его нового значения если он переодический
 uint8_t RTCTask::findAndSetNext(DateTime dt, Ds3231Alarm2Mode mode){
   uint8_t result=ALARMS_COUNT;
 for (int i=0;i<ALARMS_COUNT;i++){
@@ -220,6 +222,8 @@ ev.alarm=alarms[idx];
 xQueueSend(que,&ev,portMAX_DELAY);
 }
 
+//заряжаем таймер при помощи аларма idx
+//на minutes минут от текущего времени
 void RTCTask::setupTimer(uint16_t minutes,uint8_t idx, uint8_t act){
   DateTime dt=rtc->now();
   TimeSpan ts(minutes*60);
@@ -228,7 +232,8 @@ void RTCTask::setupTimer(uint16_t minutes,uint8_t idx, uint8_t act){
   refreshAlarms();
 }
 
-
+//заряжаем аларм idx
+//на конкретные параметры (active & save параметры по умолчанию true)
 bool RTCTask::setupAlarm(uint8_t idx, uint8_t act, uint8_t h, uint8_t m,  period_t p,bool active,bool save){
 if (idx>=ALARMS_COUNT) return false;
 alarms[idx].active=active;
@@ -264,9 +269,10 @@ return true;
 }
 
 
-//find and set next nearest alarm
+//при каких то изменениях alarm`сов (сработал добавили удалили) 
+//пересчитываем и заряжаем ближайший
 uint8_t RTCTask::refreshAlarms(){
-//rtc->clearAlarm(1);
+rtc->clearAlarm(1);
 rtc->clearAlarm(2);
 uint8_t index=ALARMS_COUNT;
 uint16_t amin,nmin,cdiff,min_diff=WEEK+1;//week and one minutes
@@ -332,18 +338,19 @@ void RTCTask::loop()
     //   xQueueSend(que,&ev,portMAX_DELAY);
     // }
 
-    if (init_complete && need_watch && !set_clock)  {
+    if (need_watch && !set_clock && init_complete)  {
      set_clock=true;
      setupAlarm(ALARMS_COUNT-1,ALARMS_COUNT-1,0,0,EVERYMINUTE_ALARM);
      refreshAlarms();  
     }
-    init_complete=true;
+    
     uint32_t command;
     notify_t nt;   
-    if (xTaskNotifyWait(0, 0, &command, init_complete?pdMS_TO_TICKS(1000):0))
+    if (xTaskNotifyWait(0, 0, &command, pdMS_TO_TICKS(5000)))
     {
          
         memcpy(&nt,&command,sizeof(command));
+        Serial.println(nt.title);
         switch (nt.title)
         {
         case ALARMSETUP:
@@ -434,7 +441,7 @@ alarmFired(2);
 
 
 //if (xEventGroupWaitBits(flg, FLAG_WIFI, pdFALSE, pdTRUE, portMAX_DELAY) & FLAG_WIFI) {    
-if (xEventGroupWaitBits(flg, FLAG_WIFI, pdFALSE, pdTRUE,pdMS_TO_TICKS(1000)) & FLAG_WIFI) {    
+if (xEventGroupWaitBits(flg, FLAG_WIFI, pdFALSE, pdTRUE,0) & FLAG_WIFI) {    
 unsigned long t= millis();    
 if (t < last_sync) last_sync=t;
   if (last_sync==0 || t - last_sync > (fast_time_interval ? SHORT_TIME : LONG_TIME))
@@ -452,6 +459,8 @@ String RTCTask::printTime()
     DateTime d=rtc->now();
     return d.timestamp();
 }
+
+
 bool RTCTask::update_time_from_inet()
 {
   WiFiUDP *ntpUDP;
