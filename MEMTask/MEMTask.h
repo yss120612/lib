@@ -86,14 +86,16 @@ void loop() override
 uint32_t command;
 event_t ev;
 notify_t nt;
+uint8_t resuls;
 if (xTaskNotifyWait(0, 0, &command, portMAX_DELAY))	{
 	memcpy(&nt,&command,sizeof(command));
 	//process_notify=1 mem_read
 	//process_notify=2 mem_ask
 	//process_notify=3 mem_write
-	if (process_notify(&sstate,&ev,nt)==2) {
+	result=process_notify(&sstate,&ev,nt);
+	if (result==2) {
         xQueueSend(que,&ev,0);
-    }else if (process_notify(&sstate,&ev,nt)==3){
+    }else if (result==3){
         xTimerStart(_timer,0);
     }
 }

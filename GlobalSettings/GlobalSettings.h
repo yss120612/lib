@@ -341,7 +341,7 @@ static uint8_t crc8(uint8_t *buffer, uint16_t size) {
 #define RELAYS_COUNT 4
 
 
-#define MEM_ASK_00 100 //прием
+#define MEM_ASK_00 100 //запрос на данные
 #define MEM_ASK_01 101
 #define MEM_ASK_02 102
 #define MEM_ASK_03 103
@@ -363,7 +363,7 @@ static uint8_t crc8(uint8_t *buffer, uint16_t size) {
 #define MEM_ASK_19 119
 #define MEM_ASK_20 120
 
-#define MEM_READ_00 50 //отправка
+#define MEM_READ_00 50 //отправка данных по запросу
 #define MEM_READ_01 51
 #define MEM_READ_02 52
 #define MEM_READ_03 53
@@ -387,7 +387,7 @@ static uint8_t crc8(uint8_t *buffer, uint16_t size) {
 
 
 
-#define MEM_SAVE_00 200 //прием
+#define MEM_SAVE_00 200 //команда на запись
 #define MEM_SAVE_01 201
 #define MEM_SAVE_02 202
 #define MEM_SAVE_03 203
