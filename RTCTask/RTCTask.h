@@ -18,8 +18,8 @@ static const char * NTPServer = "pool.ntp.org";
 
 class RTCTask: public Task{
 public:   
-    RTCTask(const char *name, uint32_t stack,EventGroupHandle_t f,QueueHandle_t q,MessageBufferHandle_t m,MessageBufferHandle_t a):Task(name, stack)
-    {que=q;flg=f;disp_mess=m;alarm_mess=a;init_complete=false;}
+    RTCTask(const char *name, uint32_t stack,EventGroupHandle_t f,QueueHandle_t q,MessageBufferHandle_t m):Task(name, stack)
+    {que=q;flg=f;disp_mess=m;init_complete=false;}
     void setNeedWatch(){need_watch=true;};
     void resetAlarms();
     void init(){init_complete=true;};
@@ -48,7 +48,7 @@ protected:
     EventGroupHandle_t flg;
     RTC_DS3231 * rtc;
     
-    MessageBufferHandle_t alarm_mess;
+    //MessageBufferHandle_t alarm_mess;
     MessageBufferHandle_t disp_mess;
     alarm_t alarms[ALARMS_COUNT];
     bool init_complete;

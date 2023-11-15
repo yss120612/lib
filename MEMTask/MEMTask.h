@@ -11,8 +11,10 @@ template< class T1 >
 class MEMTask: public Task
 {
 public:
-MEMTask(const char *name, uint32_t stack,QueueHandle_t q,void (*func)(T1 *),uint8_t(* fnotify)(T1*,event_t *,notify_t), MessageBufferHandle_t a,MessageBufferHandle_t w, uint8_t v,uint8_t adr,uint8_t ofs):Task(name, stack){
-    que=q;alarm_mess=a;web_mess=w;VER=v;ADDRESS=adr,OFFSET=ofs;
+MEMTask(const char *name, uint32_t stack,QueueHandle_t q,void (*func)(T1 *),uint8_t(* fnotify)(T1*,event_t *,notify_t), MessageBufferHandle_t w, uint8_t v,uint8_t adr,uint8_t ofs):Task(name, stack){
+    que=q;
+	//alarm_mess=a;
+	web_mess=w;VER=v;ADDRESS=adr,OFFSET=ofs;
     func_reset=func;
     process_notify=fnotify;
 	_timer=NULL;
@@ -59,7 +61,7 @@ void (*func_reset)(T1 *);
 uint8_t (*process_notify) (T1 *, event_t *, notify_t);
 
 QueueHandle_t que;
-MessageBufferHandle_t alarm_mess;
+//MessageBufferHandle_t alarm_mess;
 MessageBufferHandle_t web_mess;
 T1 sstate;
 TimerHandle_t _timer;
@@ -86,7 +88,7 @@ void loop() override
 uint32_t command;
 event_t ev;
 notify_t nt;
-uint8_t resuls;
+uint8_t result;
 if (xTaskNotifyWait(0, 0, &command, portMAX_DELAY))	{
 	memcpy(&nt,&command,sizeof(command));
 	//process_notify=1 mem_read

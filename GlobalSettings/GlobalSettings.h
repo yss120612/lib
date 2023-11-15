@@ -229,6 +229,7 @@ struct event_t
     union
     {
         uint32_t data;
+        float fdata;
         alarm_t alarm;
     };
 
