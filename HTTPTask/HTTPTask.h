@@ -10,7 +10,7 @@
 
 class HTTPTask: public Task{
 public:
-HTTPTask(const char *name, uint32_t stack,QueueHandle_t q,EventGroupHandle_t f,MessageBufferHandle_t web_m):Task(name, stack){que=q;flg=f;web_mess=web_m;}
+HTTPTask(const char *name, uint32_t stack,QueueHandle_t q,EventGroupHandle_t f,MessageBufferHandle_t web_m):Task(name, stack,1,CORE_0){que=q;flg=f;web_mess=web_m;}
 
 protected:
 void cleanup() override;

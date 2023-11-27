@@ -94,7 +94,7 @@ if (xTaskNotifyWait(0, 0, &command, portMAX_DELAY))	{
 	//process_notify=1 mem_read
 	//process_notify=2 mem_ask
 	//process_notify=3 mem_write
-	result=process_notify(&sstate,&ev,nt);
+    result=process_notify(&sstate,&ev,nt);
 	if (result==2) {
         xQueueSend(que,&ev,0);
     }else if (result==3){

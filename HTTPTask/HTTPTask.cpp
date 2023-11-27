@@ -8,7 +8,7 @@ void HTTPTask::cleanup(){
 	delete server;
 };
 void HTTPTask::setup(){
-SPIFFS.begin();
+SPIFFS.begin(true);
 server = new AsyncWebServer(80);
 if (!server){
     Serial.println("Error creating HTTP server");
@@ -22,7 +22,7 @@ server->onNotFound(std::bind(&HTTPTask::handleNotFound, this, std::placeholders:
 server->serveStatic("/js/jquery.min.js",SPIFFS,"/js/jquery.min.js");
 server->serveStatic("/js/bootstrap.min.js",SPIFFS,"/js/bootstrap.min.js");
 server->serveStatic("/js/timepicker.min.js",SPIFFS,"/js/timepicker.min.js");
-server->serveStatic("/css/font-awesome.min.css",SPIFFS,"/css/font-awesome.min.css");
+//server->serveStatic("/css/font-awesome.min.css",SPIFFS,"/css/font-awesome.min.css");
 server->serveStatic("/css/bootstrap.min.css",SPIFFS,"/css/bootstrap.min.css");
 server->on(
 	"/update", 
@@ -52,6 +52,7 @@ void HTTPTask::handleRoot(AsyncWebServerRequest * request) {
 	
 	if (!request->authenticate("Yss1", "bqt3"))
 		return request->requestAuthentication();
+		//Serial.println(SPIFFS.open("/index.htm").readString());
 		handleFile("/index.htm","text/html", request);
 }
 
@@ -85,7 +86,7 @@ void HTTPTask::handleFile(String path,String type, AsyncWebServerRequest *reques
 }
 
 void HTTPTask::handleNotFound(AsyncWebServerRequest * request) {
-	request->send(200, "text/plain", "404 PAGE NOT FOUND!!!");
+	request->send(200, "text/plain", "404 PAGE NOT FOUND!!!+");
 }
 
 void HTTPTask::handleUpdate(AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final){
