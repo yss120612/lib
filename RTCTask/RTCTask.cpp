@@ -350,7 +350,7 @@ void RTCTask::loop()
     {
          
         memcpy(&nt,&command,sizeof(command));
-        Serial.println(nt.title);
+        //Serial.println(nt.title);
         switch (nt.title)
         {
         case ALARMSETUP:
