@@ -322,11 +322,12 @@ static uint8_t crc8(uint8_t *buffer, uint16_t size) {
 #define RTCSETUPTIMER 14
 #define RTCALARMRESET 15
 #define RTCTIMELEFT_ASK 16
-#define RTCTIMELEFT_TAKE 17
+#define RTCTIMELEFT_TAKE 47
 #define ALARMSETUP 18
 #define RTCALARMFIRED 19
 #define ALARMSETFROMMEM 20
-
+#define RTCGETALARM 21
+#define WWW_GIVE_DATA 42
 
 
 //#define GETDATETIME 10

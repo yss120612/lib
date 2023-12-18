@@ -228,7 +228,7 @@ void RTCTask::setupTimer(uint16_t minutes,uint8_t idx, uint8_t act){
   DateTime dt=rtc->now();
   TimeSpan ts(minutes*60);
   dt=dt+ts;
-  if (setupAlarm(idx,idx,dt.hour(),dt.minute(),ONCE_ALARM))
+  if (setupAlarm(idx,idx,dt.hour(),dt.minute(),ONCE_ALARM,true,false))
   refreshAlarms();
 }
 
@@ -378,6 +378,9 @@ void RTCTask::loop()
             ev.button=RTCTIMELEFT_TAKE;
             ev.count=nt.packet.var;
             int tl=minutesLeft(nt.packet.var);
+            // Serial.print("Left=");
+            // Serial.println(tl);
+            // Serial.println(printAlarm(alarms[7]).c_str());
             ev.data=tl>=0?tl:9999;
             xQueueSend(que,&ev,portMAX_DELAY);
         }
@@ -429,6 +432,13 @@ void RTCTask::loop()
           resetAlarms();
           refreshAlarms();
         break;  
+        case RTCGETALARM:
+          //Serial.println("in RTC Receive:");
+          ev.state=WEB_EVENT;
+          ev.button=WWW_GIVE_DATA;
+          ev.alarm=alarms[nt.packet.var];
+          xQueueSend(que,&ev,portMAX_DELAY);
+        break;
        
      }
     }
