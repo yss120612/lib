@@ -369,6 +369,9 @@ static uint8_t crc8(uint8_t *buffer, uint16_t size) {
 #define MEM_ASK_23 123
 #define MEM_ASK_24 124
 #define MEM_ASK_25 125
+#define MEM_ASK_26 126
+#define MEM_ASK_27 127
+#define MEM_ASK_28 128
 
 #define MEM_READ_00 50 //отправка данных по запросу
 #define MEM_READ_01 51
@@ -396,7 +399,9 @@ static uint8_t crc8(uint8_t *buffer, uint16_t size) {
 #define MEM_READ_23 73
 #define MEM_READ_24 74
 #define MEM_READ_25 75
-
+#define MEM_READ_26 76
+#define MEM_READ_27 77
+#define MEM_READ_28 78
 
 
 #define MEM_SAVE_00 200 //команда на запись
@@ -425,6 +430,9 @@ static uint8_t crc8(uint8_t *buffer, uint16_t size) {
 #define MEM_SAVE_23 223
 #define MEM_SAVE_24 224
 #define MEM_SAVE_25 225
+#define MEM_SAVE_26 226
+#define MEM_SAVE_27 227
+#define MEM_SAVE_28 228
 
 
 #endif
