@@ -116,7 +116,7 @@ struct __attribute__((__packed__)) bool1_t
 struct __attribute__((__packed__)) led_state_t
 {
   uint8_t value;
-  blinkmode_t stste : 8;
+  blinkmode_t state : 8;
 };
 
 //extern struct  SystemState_t;

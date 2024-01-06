@@ -7,7 +7,7 @@ void ENCTask::setup(){
  gpio_set_direction(btn_pin, GPIO_MODE_INPUT);
  btn_semaphore=xSemaphoreCreateBinary();
  attachInterrupt(digitalPinToInterrupt((uint8_t)btn_pin),std::bind(&ENCTask::btnISR, this),CHANGE);
- if (enc1_pin>0 && enc2_pin>0)
+ if (enc1_pin!=GPIO_NUM_NC && enc2_pin!=GPIO_NUM_NC)
  {
  gpio_set_direction(enc1_pin, GPIO_MODE_INPUT);
  gpio_set_direction(enc2_pin, GPIO_MODE_INPUT);
