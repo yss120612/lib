@@ -219,6 +219,7 @@ event_t ev;
 ev.state=MEM_EVENT;
 ev.button=MEM_SAVE_00+idx;
 ev.alarm=alarms[idx];
+ev.count=1;//copy to www
 xQueueSend(que,&ev,portMAX_DELAY);
 }
 

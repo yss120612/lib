@@ -4,11 +4,14 @@
 void RELTask::setup()
 {
 
-  bool need_timer=false;;
+  bool need_timer=false;
+  event_t e;
   for (uint8_t i = 0; i < RELAYS_COUNT; i++)
     if (rpins[i] > 0)
     {
-      relay[i].setup(rpins[i],RELTYPE_SWICH, _level);
+      e.button=MEM_ASK_10+i;
+      xQueueSend(que,&e,portMAX_DELAY);
+      vTaskDelay(pdMS_TO_TICKS(100));
     }
     else
     {
@@ -28,10 +31,16 @@ xTimerStart(_timer,0);
 }
 
 void RELTask::save(uint8_t idx){
+        if (idx>=RELAYS_COUNT) return;
         event_t ev;
         ev.state=MEM_EVENT;
-        ev.button=RELWRITE1+idx;
-        ev.count=relay[idx].isOn();
+        ev.button=MEM_SAVE_10+idx;
+        ev.count=1;//copy to www
+        relState_t rs;
+        rs.ison=relay[idx].isOn();
+        rs.type =relay[idx].isButton()?RELTYPE_BUTTON:RELTYPE_SWICH;
+        rs.level=_level;
+        ev.data=rel_state2uint32(rs);
         xQueueSend(que,&ev,portMAX_DELAY);    
 }
 
@@ -41,23 +50,28 @@ void RELTask::loop()
   notify_t nt;
   event_t ev;
   uint8_t i;
+  relState_t rs;
   if (xTaskNotifyWait(0, 0, &command, portMAX_DELAY))
   {
     memcpy(&nt,&command,sizeof(nt));
     switch (nt.title)
     {
-    case RELAYSET1:
-    case RELAYSET2:
-    case RELAYSET3:
-    case RELAYSET4:
-    if (relay[nt.title-RELAYSET1].isButton())
+    case MEM_READ_10:
+    case MEM_READ_11:
+    case MEM_READ_12:
+    case MEM_READ_13:
+
+    // 
+    rs=uint322rel_state(nt.packet.value);
+    if (relay[nt.title-MEM_READ_10].isButton())
     {
-      arm(nt.title-RELAYSET1);
+      arm(nt.title-MEM_READ_10);
     }
     else{
-      relay[nt.title-RELAYSET1].setState(nt.packet.value>0);
-      if (!nt.packet.var) save(nt.title-RELAYSET1);
+      relay[nt.title-MEM_READ_10].setState(rs.ison);
+      //if (!nt.packet.var) save(nt.title-RELAYSET1);
     }
+    
     break;
     case RELAYSWITCH1:
     case RELAYSWITCH2:
@@ -70,7 +84,7 @@ void RELTask::loop()
         save(nt.title-RELAYSWITCH1);
       }
       Serial.println("Tutt");
-      break;
+    break;
     case RELAYALLOFF:
     #ifdef DEBUGG
     Serial.println("All off");

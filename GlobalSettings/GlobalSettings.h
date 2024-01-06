@@ -119,8 +119,43 @@ struct __attribute__((__packed__)) led_state_t
   blinkmode_t state : 8;
 };
 
-//extern struct  SystemState_t;
 
+static float uint_16_to_float(uint16_t value){
+return (value>>8 & 0x00FF)*1.0 + (value & 0x00FF)/100.0;
+}
+
+static uint16_t float_to_uint_16(float value){
+uint16_t i=(uint16_t)value;
+
+return  ((i<<8) & 0xFF00)|((int)((value-i)*100.0) & 0x00FF);
+}
+
+static  uint32_t led_state2uint32(led_state_t ls){
+uint32_t res=((ls.value & 0xFF)<<8 | (uint8_t)(ls.state) & 0xFF)  & 0x0000FFFF;
+return res;
+}
+
+static  led_state_t  uint322led_state(uint32_t ui){
+led_state_t ls;
+ls.value = (ui >> 8 ) & 0xFF;
+ls.state = (blinkmode_t)(ui & 0xFF);
+return ls;
+}
+
+static  uint32_t rel_state2uint32(relState_t rs){
+uint32_t res=((rs.ison & 0x1)<<7 | (rs.level & 1) << 6 | (rs.armed & 1) << 5 | (rs.type & 1) << 4) & 0x000000F0;
+return res;
+}
+
+static  relState_t  uint322rel_state(uint32_t ui){
+relState_t rs; 
+rs.ison = (ui >> 7 ) & 0x1;
+rs.level = (ui >> 6 ) & 0x1;
+rs.armed = (ui >> 5 ) & 0x1;
+rs.type = (rel_t)((ui >> 4 ) & 0x1);
+rs.dumm = 0;
+return rs;
+}
 
 
 static void getNext(alarm_t &at)

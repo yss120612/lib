@@ -22,12 +22,15 @@ void LEDTask::setup()
     // Serial.println("OK CONFIGURE LEDC TIMER");
   }
 
+  event_t e;
   for (uint8_t i = 0; i < LEDS_COUNT; i++)
   {
-    if (pins[i] > 0)
+    if (pins[i] > GPIO_NUM_NC)
     {
-
-      led[i] = new Led(pins[i], _level, channels[i]);
+      e.button=MEM_ASK_14+i;
+      xQueueSend(que,&e,portMAX_DELAY);
+      vTaskDelay(pdMS_TO_TICKS(100));
+      //led[i] = new Led(pins[i], _level, channels[i]);
     }
     else
       led[i] = NULL;
@@ -42,6 +45,16 @@ void LEDTask::save(uint8_t idx)
   ev.count = led[idx]->getMode();
   ev.data = led[idx]->getBrightness();
   xQueueSend(que, &ev, portMAX_DELAY);
+
+  ev.state=MEM_EVENT;
+  ev.button=MEM_SAVE_10+idx;
+  ev.count=1;//copy to www
+  led_state_t ls;
+  ls.state=led[idx]->getMode();
+  ls.value=led[idx]->getValue();
+  ev.data=led_state2uint32(ls);
+  xQueueSend(que,&ev,portMAX_DELAY);    
+
 }
 
 void LEDTask::setLedBrightness(uint8_t ledN, uint8_t br, bool sav)
@@ -127,18 +140,24 @@ void LEDTask::loop()
 {
   uint32_t command;
   notify_t nt;
-
+  led_state_t ls;
   if (xTaskNotifyWait(0, 0, &command, portMAX_DELAY))
   {
     memcpy(&nt, &command, sizeof(command));
+
     switch (nt.title)
     {
-    case LEDSETPARAM1:
-    case LEDSETPARAM2:
-    case LEDSETPARAM3: // init leds from memory
-    case LEDSETPARAM4:
-      setLedMode(nt.title - LEDSETPARAM1, (blinkmode_t)nt.packet.var, false);
-      setLedBrightness(nt.title - 1, nt.packet.value, false);
+    case MEM_READ_14:
+    case MEM_READ_15:
+    case MEM_READ_16:
+    
+    ls=uint322led_state(nt.packet.value);
+    // case LEDSETPARAM1:
+    // case LEDSETPARAM2:
+    // case LEDSETPARAM3: // init leds from memory
+    // case LEDSETPARAM4:
+      setLedMode(nt.title - MEM_READ_14, ls.state, false);
+      setLedBrightness(nt.title - MEM_READ_14, ls.value, false);
       break;
     case LEDBRIGHTNESS1:
     case LEDBRIGHTNESS2:
@@ -160,7 +179,7 @@ void LEDTask::loop()
       setLedMode(0, BLINK_ON, 1);
       vTaskDelay(pdMS_TO_TICKS(500));
       setLedMode(1, BLINK_ON, 1);
-      vTaskDelay(pdMS_TO_TICKS(500));
+      vTask1elay(pdMS_TO_TICKS(500));
       setLedMode(2, BLINK_ON, 1);
       break;
     case LEDALLOFF:
