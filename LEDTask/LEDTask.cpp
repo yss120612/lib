@@ -179,7 +179,7 @@ void LEDTask::loop()
       setLedMode(0, BLINK_ON, 1);
       vTaskDelay(pdMS_TO_TICKS(500));
       setLedMode(1, BLINK_ON, 1);
-      vTaskelay(pdMS_TO_TICKS(500));
+      vTaskDelay(pdMS_TO_TICKS(500));
       setLedMode(2, BLINK_ON, 1);
       break;
     case LEDALLOFF:
