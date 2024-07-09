@@ -1,31 +1,42 @@
 #include "RELTask.h"
-/////////////#include "Events.h"
+#include <esp_log.h>
+
 
 void RELTask::setup()
 {
 
-  bool need_timer=false;
+  // bool need_timer=false;
   event_t e;
+  e.state=MEM_EVENT;
+  vTaskDelay(pdMS_TO_TICKS(7000));
   for (uint8_t i = 0; i < RELAYS_COUNT; i++)
+  {
+    //ESP_LOGE("RELAY","pin=%d i=%d",rpins[i],i);
     if (rpins[i] > 0)
     {
+      //ESP_LOGE("RELAY","pin=%d i=%d",rpins[i],i);
       e.button=MEM_ASK_10+i;
-      xQueueSend(que,&e,portMAX_DELAY);
+      if(xQueueSend(que,&e,portMAX_DELAY)!=pdTRUE){
+        ESP_LOGE("RELAY","error send queue");
+      }
       vTaskDelay(pdMS_TO_TICKS(100));
+      relay[i].setup(rpins[i],RELTYPE_SWICH,HIGH);
     }
     else
     {
       //relay[i] = NULL;
     }
-   if (need_timer){
-    _timer=xTimerCreate("RelTimer",pdMS_TO_TICKS( 300 ),pdFALSE , static_cast<void*>(this), timerCb);
-   }
+}
+  //  if (need_timer){
+  //   _timer=xTimerCreate("RelTimer",pdMS_TO_TICKS( 300 ),pdFALSE , static_cast<void*>(this), timerCb);
+  //  }
 
 }
 
 void RELTask::arm(uint8_t i) {
  if (i>=4 || !relay[i].isButton() || !_timer)  return;
 relay[i].arm();
+if (!_timer) _timer=xTimerCreate("RelTimer",pdMS_TO_TICKS( 300 ),pdFALSE , static_cast<void*>(this), timerCb);
 xTimerStart(_timer,0);
 
 }
@@ -60,18 +71,17 @@ void RELTask::loop()
     case MEM_READ_11:
     case MEM_READ_12:
     case MEM_READ_13:
-
-    // 
     rs=uint322rel_state(nt.packet.value);
+    relay[nt.title-MEM_READ_10].setup(rpins[nt.title-MEM_READ_10],RELTYPE_SWICH,HIGH);
     if (relay[nt.title-MEM_READ_10].isButton())
     {
       arm(nt.title-MEM_READ_10);
     }
     else{
       relay[nt.title-MEM_READ_10].setState(rs.ison);
-      //if (!nt.packet.var) save(nt.title-RELAYSET1);
+      if (!nt.packet.var) save(nt.title-RELAYSET1);
     }
-    
+   
     break;
     case RELAYSWITCH1:
     case RELAYSWITCH2:
@@ -83,12 +93,10 @@ void RELTask::loop()
         relay[nt.title-RELAYSWITCH1].swc();
         save(nt.title-RELAYSWITCH1);
       }
-      Serial.println("Tutt");
+      
     break;
     case RELAYALLOFF:
-    #ifdef DEBUGG
-    Serial.println("All off");
-    #endif
+    
     for (i=0;i<RELAYS_COUNT;i++){
     if (!relay[i].isButton())
     {
@@ -98,16 +106,21 @@ void RELTask::loop()
     }
     }
   break;
+  case RELAYSET1:
+  case RELAYSET2:
+  case RELAYSET3:
+  case RELAYSET4:
+   relay[nt.title-RELAYSET1].setState(nt.packet.value);
+   if (nt.packet.var==0) save(nt.title-RELAYSET1);
   
+  break;
   case INITRELAYS:
      
     for (i=0;i<RELAYS_COUNT;i++){
     if (!relay[i].isButton())
     {
       relay[i].setState(nt.packet.value>>i & 1);
-      #ifdef DEBUGG
-      Serial.printf("Relay%d %d \n",i,relay[i].isOn());
-      #endif
+    
     }
     }
     
@@ -129,7 +142,7 @@ void RELTask::cleanup()
     {
       if (rpins[i] <= 0)
         break;
-      gpio_reset_pin((gpio_num_t)rpins[i]);
+      //gpio_reset_pin((gpio_num_t)rpins[i]);
       //  delete (relay[i]);
     }
   

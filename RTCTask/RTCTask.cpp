@@ -4,19 +4,17 @@
 void RTCTask::setup()
 {
 rtc= new RTC_DS3231();
-rtc->begin();
-// DateTime dt(24,2,29,9,10,0);
-// rtc->adjust(dt);
-fast_time_interval=true;
 last_sync=0;
 vTaskDelay(pdMS_TO_TICKS(5000));
 initAlarms();
 set_clock=false;
+init_complete=false;
 }
 
 void RTCTask::initAlarms(){
 event_t e;
- for (uint8_t i;i<ALARMS_COUNT;i++)
+  e.state=MEM_EVENT;
+ for (uint8_t i=0;i<ALARMS_COUNT;i++)
  {
   e.button=MEM_ASK_00+i;
   xQueueSend(que,&e,portMAX_DELAY);
@@ -43,7 +41,9 @@ delete rtc;
 int RTCTask::minutesLeft(uint8_t timerNo){
  if (timerNo>=ALARMS_COUNT) return -1;
   if (!alarms[timerNo].active) return -1;
+  
   DateTime  dt=rtc->getAlarm2();
+  
   DateTime  dt0=rtc->now();
   uint8_t d,m;
   uint16_t y;
@@ -89,13 +89,17 @@ void RTCTask::alarm(alarm_t &a){
   {
     case  EVERYMINUTE_ALARM:
     dt=dt+TimeSpan(0,0,0,5);
+  
     rtc->setAlarm1(dt,DS3231_A1_Second);  
+  
     //Serial.print("alarm--");
     break;
     case  ONCE_ALARM:
     case  EVERYHOUR_ALARM:
     case  EVERYDAY_ALARM:
+  
       rtc->setAlarm2(dt+TimeSpan(0,a.hour,a.minute,0),DS3231_A2_Hour);  
+  
       break;
     case  WDAY_ALARM:
     case  HDAY_ALARM:
@@ -106,7 +110,9 @@ void RTCTask::alarm(alarm_t &a){
     case  WD5_ALARM:
     case  WD6_ALARM:
     case  WD7_ALARM:
+  
       rtc->setAlarm2(dt+TimeSpan(a.wday+1>6?0:a.wday+1,a.hour,a.minute,0),DS3231_A2_Day);
+  
     break;
   }
 }
@@ -122,31 +128,36 @@ event_t ev;
 uint8_t idx;
 
 if (an==1){
+  
 rtc->clearAlarm(1);
 dt=rtc->getAlarm1();
+
 idx=findAndSetNext(dt,rtc->getAlarm1Mode());
 //Serial.println("Alarm fired");
 if (idx==ALARMS_COUNT-1){
   //if (idx==1){
     
-    ev.button=1;
+    
     dt=rtc->now();
     ev.alarm.hour=dt.hour();
     ev.alarm.minute=dt.minute();
     ev.alarm.wday=dt.dayOfTheWeek();
     ev.alarm.period=(period_t)dt.month();
-    ev.count=dt.day();
-    ev.state=(buttonstate_t)(dt.year()-2000);
-    xMessageBufferSend(disp_mess, &ev, sizeof(event_t), portMAX_DELAY);
+    ev.count=dt.day()<<8 & 0xFF00 | (dt.year()-2000) & 0x0FFF;
+    ev.state=ALARM_EVENT;
+    ev.button=idx;
+    xQueueSend(que,&ev,portMAX_DELAY);
     idx=refreshAlarms();
     
   }
 }else if(an==2){
+
 dt=rtc->getAlarm2();
 rtc->clearAlarm(2);
+
 idx=findAndSetNext(dt,rtc->getAlarm2Mode());
 if (idx<ALARMS_COUNT){
-ev.state=RTC_EVENT;
+ev.state=(buttonstate_t)(ALARM_EVENT<<16 & 0xFF00 | idx & 0x00FF);
 ev.button=alarms[idx].action;
 ev.alarm=alarms[idx];
 xQueueSend(que,&ev,portMAX_DELAY);
@@ -347,11 +358,12 @@ void RTCTask::loop()
     
     uint32_t command;
     notify_t nt;   
-    if (xTaskNotifyWait(0, 0, &command, pdMS_TO_TICKS(5000)))
+    if (xTaskNotifyWait(0, 0, &command, pdMS_TO_TICKS(5000))==pdTRUE)
     {
          
         memcpy(&nt,&command,sizeof(command));
         //Serial.println(nt.title);
+        
         switch (nt.title)
         {
         case ALARMSETUP:
@@ -367,6 +379,7 @@ void RTCTask::loop()
         case ALARMSETFROMMEM:
           setupAlarm(nt.alarm.action,nt.alarm.action,nt.alarm.hour,nt.alarm.minute,nt.alarm.period,nt.alarm.active,false);
           if(nt.alarm.active) refreshAlarms();
+          if (nt.alarm.action==ALARMS_COUNT-1) init_complete=true;
           break;
 
         case RTCSETUPTIMER:
@@ -392,10 +405,10 @@ void RTCTask::loop()
         case RTCGETTIME:{
             ev.state=DISP_EVENT;
             ev.button=SHOWTIME;
-            if (fast_time_interval){
-              ev.alarm.hour=25;
-              //res = snprintf(buf, sizeof(buf), "%s","Time is not*syncronized**");
-            }else{
+            // if (fast_time_interval){
+            //   ev.alarm.hour=25;
+            //   //res = snprintf(buf, sizeof(buf), "%s","Time is not*syncronized**");
+            // }else{
               DateTime dt=rtc->now();
               ev.alarm.hour=dt.hour();
               ev.alarm.minute=dt.minute();
@@ -403,11 +416,27 @@ void RTCTask::loop()
               ev.alarm.action=dt.month();
               ev.alarm.period=(period_t)dt.day();
               
-            }
+            // }
+            
             //si=xMessageBufferSend(disp_mess,buf,res,portMAX_DELAY);
             xQueueSend(que,&ev,portMAX_DELAY);
             break;
             }
+        case RTCTIMEADJUST:
+          if (nt.packet.var==0){
+              last_sync=nt.packet.value<<16 & 0xFFFF0000;
+          }else{
+              last_sync=nt.packet.value & 0xFFFF | last_sync & 0xFFFF0000;
+              DateTime d(last_sync);
+              //TimeSpan *ts=new TimeSpan(0,TIME_SHIFT,0);
+              d=d+TimeSpan(0,TIME_SHIFT,0,0);
+              //delete(ts);
+              rtc->adjust(d);
+              last_sync=0;
+              DateTime dt = rtc->now();
+              ESP_LOGE("RTC","Success update time from inet. Time is : %02d:%02d",dt.hour(),dt.minute());
+          }
+        break;    
         case ALARMSPRINT:
         {
           #ifdef DEBUGG
@@ -420,21 +449,12 @@ void RTCTask::loop()
         }
         case ALARMACTIVEPRINT:{
         DateTime dtm=rtc->getAlarm2();
-        #ifdef DEBUGG
-              Serial.printf("Active alarm=%02d:%02d Wday=%d\n",dtm.hour(),dtm.minute(),dtm.dayOfTheWeek());
-              #endif
-        break;   
-
         } 
         case ALARMSRESET:
-        #ifdef DEBUGG
-          Serial.print("Reset alarms");
-          #endif
           resetAlarms();
           refreshAlarms();
         break;  
         case RTCGETALARM:
-          //Serial.println("in RTC Receive:");
           ev.state=WEB_EVENT;
           ev.button=WWW_GIVE_DATA;
           ev.alarm=alarms[nt.packet.var];
@@ -452,15 +472,15 @@ alarmFired(2);
 
 
 //if (xEventGroupWaitBits(flg, FLAG_WIFI, pdFALSE, pdTRUE, portMAX_DELAY) & FLAG_WIFI) {    
-if (xEventGroupWaitBits(flg, FLAG_WIFI, pdFALSE, pdTRUE,0) & FLAG_WIFI) {    
-unsigned long t= millis();    
-if (t < last_sync) last_sync=t;
-  if (last_sync==0 || t - last_sync > (fast_time_interval ? SHORT_TIME : LONG_TIME))
-  {
-    last_sync = t;
-    fast_time_interval = !update_time_from_inet();
-  }
-}
+// if (xEventGroupWaitBits(flg, FLAG_WIFI, pdFALSE, pdTRUE,0) & FLAG_WIFI) {    
+// unsigned long t= millis();    
+// if (t < last_sync) last_sync=t;
+//   if (last_sync==0 || t - last_sync > (fast_time_interval ? SHORT_TIME : LONG_TIME))
+//   {
+//     last_sync = t;
+//     fast_time_interval = !update_time_from_inet();
+//   }
+// }
 
 }
 
@@ -472,30 +492,30 @@ String RTCTask::printTime()
 }
 
 
-bool RTCTask::update_time_from_inet()
-{
-  WiFiUDP *ntpUDP;
-  NTPClient *timeClient;
-  ntpUDP = new WiFiUDP();
+// bool RTCTask::update_time_from_inet()
+// {
+//   WiFiUDP *ntpUDP;
+//   NTPClient *timeClient;
+//   ntpUDP = new WiFiUDP();
 
-  timeClient = new NTPClient(*ntpUDP, NTPServer, 3600 * TIME_OFFSET, 60000 * 60 * 24);
-  timeClient->begin();
-  bool result=timeClient->forceUpdate();
+//   timeClient = new NTPClient(*ntpUDP, NTPServer, 3600 * TIME_OFFSET, 60000 * 60 * 24);
+//   timeClient->begin();
+//   bool result=timeClient->forceUpdate();
   
-  if (result)
-  {
-    DateTime d(timeClient->getEpochTime());
-    rtc->adjust(d);
-    //#ifdef DEBUGG
-    Serial.println("Success update time from inet. Time is :" + rtc->now().timestamp());
-    //#endif
-  }else{
-    Serial.println("Failed update time from inet.");
-  }
+//   if (result)
+//   {
+//     DateTime d(timeClient->getEpochTime());
+//     rtc->adjust(d);
+//     //#ifdef DEBUGG
+//     Serial.println("Success update time from inet. Time is :" + rtc->now().timestamp());
+//     //#endif
+//   }else{
+//     Serial.println("Failed update time from inet.");
+//   }
     
 
-  timeClient->end();
-  delete timeClient;
-  delete ntpUDP;
-  return result;
-}
+//   timeClient->end();
+//   delete timeClient;
+//   delete ntpUDP;
+//   return result;
+// }

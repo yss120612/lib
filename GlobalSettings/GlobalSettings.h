@@ -46,7 +46,8 @@ enum buttonstate_t : uint8_t
     WS_EVENT,
     MENU_EVENT,
     PROCESS_EVENT,
-    TELEGRAM_EVENT
+    TELEGRAM_EVENT,
+    ALARM_EVENT
 };
 
 enum period_t : uint8_t
@@ -68,12 +69,12 @@ enum period_t : uint8_t
 };
 
 
-enum flags_t : uint8_t
-{
-    FLAG_WIFI = 1,
-    FLAG_MQTT = 2,
-    FLAG_MEMREADY = 4
-};
+// enum flags_t : uint8_t
+// {
+#define FLAG_WIFI  BIT0
+#define FLAG_MQTT  BIT1
+#define FLAG_HTTP  BIT2
+//};
 
 
 enum rel_t
@@ -204,12 +205,15 @@ static void getNext(alarm_t &at)
     }
 }
 
-static std::string printAlarm(alarm_t at)
+static void printAlarm(String &per, alarm_t at)
 {
-    std::string per = at.active ? "+" : "-";
+    per = at.active ? "+" : "-";
 
     switch (at.period)
     {
+    case EVERYMINUTE_ALARM:
+        per += " Em.";
+        break;
     case ONCE_ALARM:
         per += " 1t.";
         break;
@@ -220,10 +224,10 @@ static std::string printAlarm(alarm_t at)
         per += " Hd.";
         break;
     case EVERYDAY_ALARM:
-        per += " 1d.";
+        per += " Ed.";
         break;
     case EVERYHOUR_ALARM:
-        per += " 1h.";
+        per += " Eh.";
         break;
     case WD7_ALARM:
         per += " Vs.";
@@ -248,11 +252,10 @@ static std::string printAlarm(alarm_t at)
         break;
     }
     char buf[30];
-    uint8_t res = snprintf(buf, sizeof(buf), "%d %02d:%02d %s (%d)\n", at.action, at.hour, at.minute, per.c_str(), at.wday);
-    std::string str = "error!";
+    uint8_t res = snprintf(buf, sizeof(buf), "%d %02d:%02d %s (%d)", at.action, at.hour, at.minute, per.c_str(), at.wday);
     if (res >= 0 && res < sizeof(buf))
-        str = buf;
-    return str;
+        per = buf;
+    else per="error !";    
 }
 
 struct event_t
@@ -363,7 +366,7 @@ static uint8_t crc8(uint8_t *buffer, uint16_t size) {
 #define ALARMSETFROMMEM 20
 #define RTCGETALARM 21
 #define WWW_GIVE_DATA 42
-
+#define RTCTIMEADJUST 22
 
 //#define GETDATETIME 10
 
@@ -469,5 +472,43 @@ static uint8_t crc8(uint8_t *buffer, uint16_t size) {
 #define MEM_SAVE_27 227
 #define MEM_SAVE_28 228
 
+static char* http_content_type(char *path) {
+    char *ext = strrchr(path, '.');
+    if (strcmp(ext, ".html") == 0) return "text/html";
+    if (strcmp(ext, ".htm") == 0)  return "text/html";
+    if (strcmp(ext, ".css") == 0)  return "text/css";
+    if (strcmp(ext, ".js") == 0)   return "text/javascript";
+    if (strcmp(ext, ".png") == 0)  return "image/png";
+    if (strcmp(ext, ".jpg") == 0)  return "image/jpeg";
+    if (strcmp(ext, ".ico") == 0)  return "image/x-icon";
+    if (strcmp(ext, ".json") == 0) return "application/json";
+    return "text/plain";
+}
+
+static char * malloc_stringf(const char *format, ...) 
+{
+  char *ret = nullptr;
+  if (format != nullptr) {
+    // get the list of arguments
+    va_list args;
+    va_start(args, format);
+    //va_copy(args2, args1);
+    // calculate length of resulting string
+    int len = vsnprintf(nullptr, 0, format, args);
+    
+    // allocate memory for string
+    if (len > 0) {
+      ret = (char*)malloc(len+1);
+      if (ret != nullptr) {
+        memset(ret, 0, len+1);     
+        vsnprintf(ret, len+1, format, args);
+      } else {
+        ESP_LOGE("GLOBAL", "Failed to format string: out of memory!");
+      };
+    };
+    va_end(args);
+  };
+  return ret;
+}
 
 #endif

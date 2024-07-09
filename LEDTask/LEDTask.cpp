@@ -22,7 +22,9 @@ void LEDTask::setup()
     // Serial.println("OK CONFIGURE LEDC TIMER");
   }
 
+  vTaskDelay(pdMS_TO_TICKS(6000));
   event_t e;
+  e.state=MEM_EVENT;
   for (uint8_t i = 0; i < LEDS_COUNT; i++)
   {
     if (pins[i] > GPIO_NUM_NC)
@@ -30,7 +32,7 @@ void LEDTask::setup()
       e.button=MEM_ASK_14+i;
       xQueueSend(que,&e,portMAX_DELAY);
       vTaskDelay(pdMS_TO_TICKS(100));
-      //led[i] = new Led(pins[i], _level, channels[i]);
+      led[i] = new Led(pins[i], _level, channels[i]);
     }
     else
       led[i] = NULL;

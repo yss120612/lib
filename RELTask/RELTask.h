@@ -15,7 +15,11 @@
 
 class RELTask: public Task{
 public:   
-    RELTask(const char *name, uint32_t stack,QueueHandle_t q,const uint8_t rpn [], bool lv=LOW):Task(name, stack){que=q;_level=lv;memcpy(rpins,rpn,RELAYS_COUNT);}
+    RELTask(const char *name, uint32_t stack,QueueHandle_t q,const uint8_t rpn [], bool lv=LOW):Task(name, stack){
+        que=q;
+        _level=lv;
+        memcpy(rpins,rpn,RELAYS_COUNT);
+        }
     
    
     //blinkmode_t get_blinkmode(uint8_t idx) {return led[idx]->getMode();}

@@ -1,8 +1,8 @@
-#include <esp_log.h>
+//#include <esp_log.h>
 #include "Task.h"
+#include <esp_log.h>
 
-
-static const char TAG[] = "Task";
+//static const char TAG[] = "Task";
 
 Task::Task(const char *name, uint32_t stack, uint8_t priority, core_t core) {
   BaseType_t result;
@@ -10,9 +10,7 @@ Task::Task(const char *name, uint32_t stack, uint8_t priority, core_t core) {
   _flags = xEventGroupCreate();
   if (! _flags) {
     _task = NULL;
-    #ifdef DEBUGG
-    Serial.println("Error creating RTOS event group!");
-    #endif
+   
     return;
   }
   if (core < CORE_ANY)
@@ -22,9 +20,7 @@ Task::Task(const char *name, uint32_t stack, uint8_t priority, core_t core) {
   if (result != pdPASS) {
     _task = NULL;
     vEventGroupDelete(_flags);
-    #ifdef DEBUGG
-    Serial.println("Error creating RTOS task!");
-    #endif
+   
   }
   //Serial.println("task OK!");
 }
@@ -59,12 +55,12 @@ void Task::destroy() {
 }
 
 void Task::notify(uint32_t value) {
+  //uint32_t val;
   if (_task) {
-//xTaskNotify(_task, value, eSetValueWithoutOverwrite);
-     while (xTaskNotify(_task, value, eSetValueWithoutOverwrite)==pdFALSE){
-       vTaskDelay(1);
-     }
-    
+    while (xTaskNotify(_task, value, eSetValueWithoutOverwrite)==pdFALSE){
+        vTaskDelay(10);
+      }
+  
   }
 }
 

@@ -7,7 +7,6 @@
 #include <freertos/portmacro.h>
 #include <freertos/message_buffer.h>
 #include <freertos/timers.h>
-#include <HardwareSerial.h>
 #include <GlobalSettings.h>
 
 class Task {
@@ -41,7 +40,7 @@ protected:
   virtual void cleanup() {};
 
   void taskHandler();
-
+  
   static portMUX_TYPE _mutex;
   EventGroupHandle_t _flags;
   TaskHandle_t _task;
