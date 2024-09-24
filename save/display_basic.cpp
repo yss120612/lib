@@ -6,7 +6,7 @@
 #include "esp_log.h"
 
 #include "display.h"
-#include "font8x8_basic.h"
+
 
 #define TAG "SSD1306"
 
@@ -416,7 +416,7 @@ void ssd1306_bitmaps(SSD1306_t * dev, int xpos, int ypos, uint8_t * bitmap, int 
 
 
 // Set pixel to internal buffer. Not show it.
-void _ssd1306_pixel(SSD1306_t * dev, int xpos, int ypos, bool invert)
+void  BV_ssd1306_pixel(SSD1306_t * dev, int xpos, int ypos, bool invert)
 {
 	uint8_t _page = (ypos / 8);
 	uint8_t _bits = (ypos % 8);

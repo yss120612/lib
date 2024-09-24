@@ -22,7 +22,7 @@ event_t e;
 }
 
 void RTCTask::resetAlarms(){
-  event_t e;
+ 
   for (uint8_t i;i<ALARMS_COUNT;i++)
  {
   alarms[i].active=false;
@@ -37,46 +37,56 @@ delete rtc;
 }
 
 //возвращает время до срабатывания таймера № в минутах
-//если что то не так -1
+//если что то не так -1,-2...
 int RTCTask::minutesLeft(uint8_t timerNo){
+  //ESP_LOGE("RTC","timer %d %d:%d period=%d active=%d",timerNo,alarms[timerNo].hour,alarms[timerNo].minute,alarms[timerNo].period,alarms[timerNo].active);
  if (timerNo>=ALARMS_COUNT) return -1;
-  if (!alarms[timerNo].active) return -1;
+ if (alarms[timerNo].period!=ONCE_DATE_ALARM) return -3;
+  if (!alarms[timerNo].active) return -2;
   
   DateTime  dt=rtc->getAlarm2();
+  if (!dt.isValid()) return -4;
   
-  DateTime  dt0=rtc->now();
-  uint8_t d,m;
-  uint16_t y;
-  d=dt0.day();
-  m=dt0.month();
-  y=dt0.year();
-  if (dt.hour()<dt0.hour()||dt.hour()==dt0.hour()&&dt.minute()<dt0.minute()){
-    switch (dt0.month()){
-      case 1:
-      case 3:
-      case 5:
-      case 7:
-      case 8:
-      case 10:
-        if (d==31){d=1;m++;} else d++;
-      break;
-      case 2:
-        if (d==(y%4?28:29)){d=1;m++;} else d++;
-      break;
-      case 4:
-      case 6:
-      case 9:
-      case 11:
-        if (d==30){d=1;m+=1;} else d++;
-      break;
-      case 12:
-        if (d==31){d=1;m=1;y++;} else d++;
-      break;
-    }
-  }
-  DateTime  dt1(y,m,d,dt.hour(),dt.minute());
-  if (dt.isValid() && dt1.isValid()) return (dt1.unixtime()-dt0.unixtime())/60+1;
-  return -1;
+   DateTime  dt0=rtc->now();
+   
+   
+   if (!dt0.isValid()) return -5;
+   DateTime dt2(dt0.year(),dt0.month(),dt.day(),dt.hour(),dt.minute(),dt.second());
+   if (!dt2.isValid()) return -6;
+   
+   if (dt2.unixtime()>=dt0.unixtime()) return (dt2.unixtime()-dt0.unixtime())/60+1;
+   return -7;
+  // uint8_t d,m;
+  // uint16_t y;
+  // d=dt0.day();
+  // m=dt0.month();
+  // y=dt0.year();
+  // if (dt.hour()<dt0.hour()||dt.hour()==dt0.hour()&&dt.minute()<dt0.minute()){
+  //   switch (dt0.month()){
+  //     case 1:
+  //     case 3:
+  //     case 5:
+  //     case 7:
+  //     case 8:
+  //     case 10:
+  //       if (d==31){d=1;m++;} else d++;
+  //     break;
+  //     case 2:
+  //       if (d==(y%4?28:29)){d=1;m++;} else d++;
+  //     break;
+  //     case 4:
+  //     case 6:
+  //     case 9:
+  //     case 11:
+  //       if (d==30){d=1;m+=1;} else d++;
+  //     break;
+  //     case 12:
+  //       if (d==31){d=1;m=1;y++;} else d++;
+  //     break;
+  //   }
+  // }
+  // DateTime  dt1(y,m,d,dt.hour(),dt.minute());
+  
 }
 
 //установка конкретного будильника
@@ -114,11 +124,24 @@ void RTCTask::alarm(alarm_t &a){
       rtc->setAlarm2(dt+TimeSpan(a.wday+1>6?0:a.wday+1,a.hour,a.minute,0),DS3231_A2_Day);
   
     break;
+   
   }
 }
 
-
-
+//заряжаем таймер при помощи аларма idx
+//на minutes минут от текущего времени
+//возводится конкретный будильник, как в alarm
+void RTCTask::setupTimer(uint16_t minutes,uint8_t idx, uint8_t act){
+  
+  for (uint8_t i;i<ALARMS_COUNT;i++) if(alarms[i].period!=EVERYMINUTE_ALARM){
+    alarms[i].active=false;
+    saveAlarm(i);
+  }
+  DateTime dt1(rtc->now().unixtime()+minutes*60);
+  setupAlarm(idx,act,dt1.hour(),dt1.minute(),ONCE_DATE_ALARM,true,false);
+      rtc->setAlarm2(dt1,DS3231_A2_Date);
+  
+}
 
 //сработал будильник №
 void RTCTask::alarmFired(uint8_t an){
@@ -157,8 +180,10 @@ rtc->clearAlarm(2);
 
 idx=findAndSetNext(dt,rtc->getAlarm2Mode());
 if (idx<ALARMS_COUNT){
-ev.state=(buttonstate_t)(ALARM_EVENT<<16 & 0xFF00 | idx & 0x00FF);
-ev.button=alarms[idx].action;
+//ev.state=(buttonstate_t)(ALARM_EVENT<<16 & 0xFF00 | idx & 0x00FF);
+ev.state=(buttonstate_t)ALARM_EVENT;
+//ev.button=alarms[idx].action;
+ev.button=idx;
 ev.alarm=alarms[idx];
 xQueueSend(que,&ev,portMAX_DELAY);
 idx=refreshAlarms();
@@ -183,13 +208,14 @@ uint8_t RTCTask::findAndSetNext(DateTime dt, Ds3231Alarm1Mode mode){
   
 for (int i=0;i<ALARMS_COUNT;i++){
   if (!alarms[i].active) continue;
-  if (mode==DS3231_A1_Second){
+  if (alarms[i].period==EVERYMINUTE_ALARM){
       result=i;
       break;
     }
 }
 if (result<ALARMS_COUNT) 
 {
+  //ESP_LOGE("RTC","Alarm 1 no %d", result);
  getNext(alarms[result]);
 }
 
@@ -205,9 +231,14 @@ for (int i=0;i<ALARMS_COUNT;i++){
   if (!alarms[i].active) continue;
   
   if (alarms[i].hour==dt.hour() && alarms[i].minute==dt.minute()){
-    
-    if (mode==DS3231_A2_Hour){
-      if (alarms[i].period==EVERYHOUR_ALARM || alarms[i].period==EVERYDAY_ALARM || alarms[i].period==ONCE_ALARM) {result=i;break;}
+    if (alarms[i].period==ONCE_DATE_ALARM || alarms[i].period==ONCE_ALARM){
+      //alarms[i].active=false;
+      result=i;
+      break;
+    }
+    else if (alarms[i].period==EVERYHOUR_ALARM || alarms[i].period==EVERYDAY_ALARM){
+      result=i;
+      break;
     }
     else{
       if (dt.dayOfTheWeek()==alarms[i].wday){result=i;break;}
@@ -218,6 +249,7 @@ for (int i=0;i<ALARMS_COUNT;i++){
 if (result<ALARMS_COUNT) 
 {
 getNext(alarms[result]);
+//ESP_LOGE("RTC","Alarm 2 no %d", result);
 saveAlarm(result);
 }
 
@@ -225,7 +257,7 @@ return result;
 }
 
 void RTCTask::saveAlarm(uint8_t idx){
-if (alarms[idx].period==EVERYMINUTE_ALARM) return;
+if (alarms[idx].period==EVERYMINUTE_ALARM || alarms[idx].period==ONCE_DATE_ALARM) return;
 event_t ev;
 ev.state=MEM_EVENT;
 ev.button=MEM_SAVE_00+idx;
@@ -234,15 +266,7 @@ ev.count=1;//copy to www
 xQueueSend(que,&ev,portMAX_DELAY);
 }
 
-//заряжаем таймер при помощи аларма idx
-//на minutes минут от текущего времени
-void RTCTask::setupTimer(uint16_t minutes,uint8_t idx, uint8_t act){
-  DateTime dt=rtc->now();
-  TimeSpan ts(minutes*60);
-  dt=dt+ts;
-  if (setupAlarm(idx,idx,dt.hour(),dt.minute(),ONCE_ALARM,true,false))
-  refreshAlarms();
-}
+
 
 //заряжаем аларм idx
 //на конкретные параметры (active & save параметры по умолчанию true)
@@ -259,14 +283,14 @@ uint16_t amin=h*60+m;
 uint16_t nmin=dt.hour()*60+dt.minute();
 uint8_t dw=dt.dayOfTheWeek();
 
-if (p>=WD7_ALARM) {dw=(uint8_t)p-(uint8_t)WD7_ALARM;}
+if (p>=WD7_ALARM && p<=WD6_ALARM) {dw=(uint8_t)p-(uint8_t)WD7_ALARM;}
 else if (p==WDAY_ALARM) {
 if (dw>5||dw==0) {dw=1;} 
 else if (nmin>=amin) {dw=dw<5?dw+1:1;}
 }else if (p==HDAY_ALARM) {
 if (dw>0 && dw<6) {dw=6;} 
 else if (nmin>=amin) {dw=dw==6?0:6;}
-}else if (p==ONCE_ALARM || p==EVERYDAY_ALARM){
+}else if (p==ONCE_ALARM || p==EVERYDAY_ALARM || ONCE_DATE_ALARM){
 
 }else if (p==EVERYHOUR_ALARM){
   h=dt.hour();
@@ -289,6 +313,8 @@ rtc->clearAlarm(2);
 uint8_t index=ALARMS_COUNT;
 uint16_t amin,nmin,cdiff,min_diff=WEEK+1;//week and one minutes
 DateTime d=rtc->now();
+DateTime d2=rtc->getAlarm2();
+DateTime d0(d.year(),d.month(),d2.day(),d2.hour(),d2.minute(),0);
 for (uint8_t i=0;i<ALARMS_COUNT;i++){
   if (!alarms[i].active) continue;
   amin=alarms[i].hour*60+alarms[i].minute;
@@ -305,6 +331,9 @@ for (uint8_t i=0;i<ALARMS_COUNT;i++){
   case ONCE_ALARM:
   if (amin<=nmin) amin+=DAY;
     break;
+  case ONCE_DATE_ALARM:
+     cdiff=(d0.unixtime()-d.unixtime())*60;
+  break;  
   default:
   amin+=(alarms[i].wday*DAY+((d.dayOfTheWeek()>alarms[i].wday)?WEEK:0));
   nmin+=d.dayOfTheWeek()*DAY;
@@ -313,7 +342,7 @@ for (uint8_t i=0;i<ALARMS_COUNT;i++){
   }
     break;
   }
-cdiff=amin-nmin;  
+if (alarms[i].period!=ONCE_DATE_ALARM) cdiff=amin-nmin;  
 #ifdef DEBUGG
 Serial.printf("Diff=%d ", cdiff);
 Serial.print(printAlarm(alarms[i]).c_str());
@@ -369,11 +398,6 @@ void RTCTask::loop()
         case ALARMSETUP:
 
           setupAlarm(nt.alarm.action,nt.alarm.action,nt.alarm.hour,nt.alarm.minute,nt.alarm.period);
-          #ifdef DEBUGG
-          portENTER_CRITICAL(&_mutex);
-          Serial.print(printAlarm(alarms[nt.alarm.action]).c_str());   
-          portEXIT_CRITICAL(&_mutex);
-        #endif
           refreshAlarms();
           break;
         case ALARMSETFROMMEM:
@@ -384,7 +408,7 @@ void RTCTask::loop()
 
         case RTCSETUPTIMER:
           setupTimer(nt.packet.value,nt.packet.var,nt.packet.var);
-          refreshAlarms();
+          //refreshAlarms();
         break;
         case RTCTIMELEFT_ASK:
         {
@@ -392,10 +416,7 @@ void RTCTask::loop()
             ev.button=RTCTIMELEFT_TAKE;
             ev.count=nt.packet.var;
             int tl=minutesLeft(nt.packet.var);
-            // Serial.print("Left=");
-            // Serial.println(tl);
-            // Serial.println(printAlarm(alarms[7]).c_str());
-            ev.data=tl>=0?tl:9999;
+            ev.data=tl>=0?tl:9999+tl;
             xQueueSend(que,&ev,portMAX_DELAY);
         }
         break;

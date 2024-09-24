@@ -4,6 +4,7 @@
 
 //#include "driver/spi_master.h"
 #include <Arduino.h>
+#include "font8x8_basic.h"
 // Following definitions are bollowed from 
 // http://robotcantalk.blogspot.com/2015/03/interfacing-arduino-with-ssd1306-driven.html
 

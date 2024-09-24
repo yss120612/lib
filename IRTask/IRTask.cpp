@@ -17,10 +17,10 @@ void IRTask::loop(){
         ev.button=(uint8_t)dres.command;
         ev.count=(uint8_t)dres.address;
         ev.data=dres.decode_type<0?999:(int32_t)dres.decode_type;
-        ESP_LOGI("IR","IR Command=%d Address=%d Type=%d",ev.button,ev.count,ev.data);
-        if (dres.address==device){
+        ESP_LOGI("IR task","IR Command=%d Address=%d Type=%d",ev.button,ev.count,ev.data);
+        //if (dres.address==device){
         xQueueSend(que,&ev,portMAX_DELAY);
-        }
+        //}
         
         }
         irrecv->resume();

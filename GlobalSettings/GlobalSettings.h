@@ -65,7 +65,8 @@ enum period_t : uint8_t
     WD4_ALARM,
     WD5_ALARM,
     WD6_ALARM,
-    EVERYMINUTE_ALARM
+    EVERYMINUTE_ALARM,
+    ONCE_DATE_ALARM
 };
 
 
@@ -168,8 +169,10 @@ static void getNext(alarm_t &at)
             at.active=true;
             break;
     case ONCE_ALARM:
-        at.active = false;
+    case ONCE_DATE_ALARM:
+         at.active = false;
         break;
+        
     case WDAY_ALARM:
         if (at.wday >= 5)
             at.wday = 1;
@@ -410,6 +413,9 @@ static uint8_t crc8(uint8_t *buffer, uint16_t size) {
 #define MEM_ASK_26 126
 #define MEM_ASK_27 127
 #define MEM_ASK_28 128
+#define MEM_ASK_29 129
+#define MEM_ASK_30 130
+#define MEM_ASK_31 131
 
 #define MEM_READ_00 50 //отправка данных по запросу
 #define MEM_READ_01 51
@@ -440,6 +446,9 @@ static uint8_t crc8(uint8_t *buffer, uint16_t size) {
 #define MEM_READ_26 76
 #define MEM_READ_27 77
 #define MEM_READ_28 78
+#define MEM_READ_29 79
+#define MEM_READ_30 80
+#define MEM_READ_31 81
 
 
 #define MEM_SAVE_00 200 //команда на запись
@@ -471,6 +480,9 @@ static uint8_t crc8(uint8_t *buffer, uint16_t size) {
 #define MEM_SAVE_26 226
 #define MEM_SAVE_27 227
 #define MEM_SAVE_28 228
+#define MEM_SAVE_29 229
+#define MEM_SAVE_30 230
+#define MEM_SAVE_31 231
 
 static char* http_content_type(char *path) {
     char *ext = strrchr(path, '.');

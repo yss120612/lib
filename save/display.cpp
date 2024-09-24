@@ -134,7 +134,7 @@ void i2c_display_image(SSD1306_t * dev, int page, int seg, uint8_t * images, int
 	if (page >= dev->_pages) return;
 	if (seg >= dev->_width) return;
 
-	int _seg = seg + CONFIG_OFFSETX;
+	int _seg = seg;// + CONFIG_OFFSETX;
 	uint8_t columLow = _seg & 0x0F;
 	uint8_t columHigh = (_seg >> 4) & 0x0F;
 
@@ -151,6 +151,7 @@ void i2c_display_image(SSD1306_t * dev, int page, int seg, uint8_t * images, int
 	}
 	int out_index = 0;
 	out_buf[out_index++] = OLED_CONTROL_BYTE_CMD_STREAM;
+
 	// Set Lower Column Start Address for Page Addressing Mode
 	out_buf[out_index++] = (0x00 + columLow);
 	// Set Higher Column Start Address for Page Addressing Mode

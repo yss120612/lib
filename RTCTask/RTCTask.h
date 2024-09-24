@@ -35,6 +35,7 @@ protected:
     uint8_t refreshAlarms();
     void resetAlarm(uint8_t n);
     void alarm(alarm_t &a);
+    //void alarm_period(int minutes);
     int minutesLeft(uint8_t timerNo);
 
     void alarmFired(uint8_t aNo);
