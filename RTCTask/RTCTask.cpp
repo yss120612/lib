@@ -120,9 +120,7 @@ void RTCTask::alarm(alarm_t &a){
     case  WD5_ALARM:
     case  WD6_ALARM:
     case  WD7_ALARM:
-  
       rtc->setAlarm2(dt+TimeSpan(a.wday+1>6?0:a.wday+1,a.hour,a.minute,0),DS3231_A2_Day);
-  
     break;
    
   }

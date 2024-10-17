@@ -107,7 +107,8 @@ public:
     Point center_text_hor(uint8_t y,const char * text);
     void draw_text_ontime(uint8_t x,uint8_t y,const char * text,int time=3000);
     void center_text_ontime(const char * text,int time=3000);
-    void line(int x1, int y1, int x2, int y2, bool invert=true);
+    void draw_time(int ms);
+    void line(int x1, int y1, int x2, int y2, bool invert = true);
     void rectangle(int x1, int y1, int x2, int y2, bool invert=true);
     void triangle(int x1, int y1, int x2, int y2, int x3, int y3, bool invert=true);
     void invert_box(int x1, int y1, int x2, int y2);

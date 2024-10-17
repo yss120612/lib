@@ -13,17 +13,21 @@ template< class T1 >
 class MEMTask: public Task
 {
 public:
-MEMTask(const char *name, uint32_t stack,QueueHandle_t q,void (*func)(T1 *),uint8_t(* fnotify)(T1*,event_t *,notify_t), MessageBufferHandle_t w, uint8_t v,uint8_t adr,uint8_t ofs):Task(name, stack){
+MEMTask(const char *name, uint32_t stack,QueueHandle_t q,void (*func)(T1 *),uint8_t(* fnotify)(T1*,event_t *,notify_t), T1 * state, uint8_t v,int adr,int ofs):Task(name, stack){
     que=q;
-	web_mess=w;VER=v;ADDRESS=adr,OFFSET=ofs;
+	//web_mess=w;
+	VER=v;ADDRESS=adr,OFFSET=ofs;
     func_reset=func;
     process_notify=fnotify;
 	_timer=NULL;
-	
+	sstate=state;
     }
-EventGroupHandle_t flags;
+
 void pause() override
 {
+	if (xTimerIsTimerActive){
+		write_state();
+	}
      if (xTimerDelete(_timer,0)==pdFAIL)
      {
          ESP_LOGE(MYTAG,"Timer stop error");
@@ -54,12 +58,12 @@ void (*func_reset)(T1 *);
 uint8_t (*process_notify) (T1 *, event_t *, notify_t);
 
 QueueHandle_t que;
-MessageBufferHandle_t web_mess;
-T1 sstate;
+//MessageBufferHandle_t web_mess;
+T1 * sstate;
 TimerHandle_t _timer;
 uint8_t VER;
-uint8_t ADDRESS;
-uint8_t OFFSET;
+int ADDRESS;
+int OFFSET;
 
 void setup() override
 {
@@ -86,34 +90,35 @@ if (xTaskNotifyWait(0, 0, &command, portMAX_DELAY))	{
 	//process_notify=1 mem_read
 	//process_notify=2 mem_ask
 	//process_notify=3 mem_write
-    result=process_notify(&sstate,&ev,nt);
+    result=process_notify(sstate,&ev,nt);
 	if (result==2) {
 		ev.count=1;//also notify web
         xQueueSend(que,&ev,0);
     }else if (result==3){
         xTimerStart(_timer,0);
 		//ESP_LOGE("MEM","Timer started!");
-    }else if (result==4){
-		xMessageBufferSend(web_mess,(uint8_t *)&sstate,sizeof(sstate),0);
 	}
+    // }else if (result==4){
+	// 	xMessageBufferSend(web_mess,(uint8_t *)sstate,sizeof(T1),0);
+	// }
 }
 
 };
 
 void reset_memory(){
- func_reset(&sstate);
+ func_reset(sstate);
  xTimerStart(_timer,0);
 };
 
 void read_state()
 {
-	read(0, (uint8_t *)&sstate, sizeof(T1));
-	uint8_t crc=crc8((uint8_t *)&sstate,sizeof(T1));
+	read(0, (uint8_t *)sstate, sizeof(T1));
+	uint8_t crc=crc8((uint8_t *)sstate,sizeof(T1));
 	
 	if (crc!=0)//second attempt to read
 	{
-		read(0, (uint8_t *)&sstate, sizeof(T1));
-		crc=crc8((uint8_t *)&sstate,sizeof(T1));
+		read(0, (uint8_t *)sstate, sizeof(T1));
+		crc=crc8((uint8_t *)sstate,sizeof(T1));
 		
 	}
 	if (crc!=0)//second attempt to read
@@ -121,7 +126,7 @@ void read_state()
 		ESP_LOGE("MEM","Bad CRC!");
 	}
 
-	if (VER!=sstate.version || crc!=0)
+	if (VER!=sstate->version || crc!=0)
 	{
 		reset_memory();
 	}
@@ -129,8 +134,8 @@ void read_state()
 
 void write_state()
 {
-	sstate.crc=crc8((uint8_t *)&sstate, sizeof(sstate)-1);
-	write(0, (uint8_t *)&sstate, sizeof(sstate));
+	sstate->crc=crc8((uint8_t *)sstate, sizeof(T1)-1);
+	write(0, (uint8_t *)sstate, sizeof(T1));
 };
 
 void read(uint16_t index, uint8_t *buf, uint16_t len)

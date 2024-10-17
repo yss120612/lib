@@ -79,7 +79,7 @@ void RELTask::loop()
     }
     else{
       relay[nt.title-MEM_READ_10].setState(rs.ison);
-      if (!nt.packet.var) save(nt.title-RELAYSET1);
+      //if (!nt.packet.var) save(nt.title-RELAYSET1);
     }
    
     break;

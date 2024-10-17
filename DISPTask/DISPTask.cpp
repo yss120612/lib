@@ -140,17 +140,21 @@ Point Display::center_text_hor(uint8_t y, const char *text)
 void Display::draw_text_ontime(uint8_t x, uint8_t y, const char *text, int time)
 {
 	draw_text(x,y,text);
-	draw();
-	xTimerChangePeriod(_timer,time,0);
+	draw_time(time);
+
 
 }
 
 void Display::center_text_ontime(const char *text, int time)
 {
 	center_text(text);
-	draw();
-	xTimerChangePeriod(_timer,time,0);
+	draw_time(time);
 }
+
+void Display::draw_time(int ms){
+	draw();
+	xTimerChangePeriod(_timer,ms,0);
+}	
 
 void Display::draw()
 {

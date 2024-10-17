@@ -27,7 +27,6 @@ enum blinkmode_t : uint8_t
     BLINK_SUNSET
 };
 
-
 enum buttonstate_t : uint8_t
 {
     NONE_EVENT,
@@ -69,14 +68,12 @@ enum period_t : uint8_t
     ONCE_DATE_ALARM
 };
 
-
 // enum flags_t : uint8_t
 // {
 #define FLAG_WIFI  BIT0
 #define FLAG_MQTT  BIT1
 #define FLAG_HTTP  BIT2
 //};
-
 
 enum rel_t
 {
@@ -92,9 +89,6 @@ struct __attribute__((__packed__)) relState_t
     rel_t type : 1;
     uint8_t dumm : 4;
 };
-
-
-
 
 const uint16_t WEEK = 10080; // minutes in week
 const uint16_t DAY = 1440;   // minutes in day
@@ -121,14 +115,12 @@ struct __attribute__((__packed__)) led_state_t
   blinkmode_t state : 8;
 };
 
-
 static float uint_16_to_float(uint16_t value){
 return (value>>8 & 0x00FF)*1.0 + (value & 0x00FF)/100.0;
 }
 
 static uint16_t float_to_uint_16(float value){
 uint16_t i=(uint16_t)value;
-
 return  ((i<<8) & 0xFF00)|((int)((value-i)*100.0) & 0x00FF);
 }
 
@@ -294,18 +286,52 @@ struct notify_t
 };
 
 
-
-static uint8_t crc8(uint8_t *buffer, uint16_t size) {
-  uint8_t crc = 0;
-  for (uint16_t i = 0; i < size; i++) {
-    uint8_t data = buffer[i];
-    for (uint8_t j = 8; j > 0; j--) {
-      crc = ((crc ^ data) & 1) ? (crc >> 1) ^ 0x8C : (crc >> 1);
-      data >>= 1;
+static void crc8_byte(uint8_t &crc, uint8_t data) {
+#if defined (__AVR__)
+    // резкий алгоритм для AVR
+    uint8_t counter;
+    uint8_t buffer;
+    asm volatile (
+    "EOR %[crc_out], %[data_in] \n\t"
+    "LDI %[counter], 8          \n\t"
+    "LDI %[buffer], 0x8C        \n\t"
+    "_loop_start_%=:            \n\t"
+    "LSR %[crc_out]             \n\t"
+    "BRCC _loop_end_%=          \n\t"
+    "EOR %[crc_out], %[buffer]  \n\t"
+    "_loop_end_%=:              \n\t"
+    "DEC %[counter]             \n\t"
+    "BRNE _loop_start_%="
+    : [crc_out]"=r" (crc), [counter]"=d" (counter), [buffer]"=d" (buffer)
+    : [crc_in]"0" (crc), [data_in]"r" (data)
+    );
+#else
+    // обычный для всех остальных
+    uint8_t i = 8;
+    while (i--) {
+        crc = ((crc ^ data) & 1) ? (crc >> 1) ^ 0x8C : (crc >> 1);
+        data >>= 1;
     }
-  }
-  return crc;
+#endif
 }
+
+static uint8_t crc8(uint8_t *buffer, uint8_t size) {
+    uint8_t crc = 0;
+    for (uint8_t i = 0; i < size; i++) crc8_byte(crc, buffer[i]);
+    return crc;
+}
+
+// static uint8_t crc8(uint8_t *buffer, uint16_t size) {
+//   uint8_t crc = 0;
+//   for (uint16_t i = 0; i < size; i++) {
+//     uint8_t data = buffer[i];
+//     for (uint8_t j = 8; j > 0; j--) {
+//       crc = ((crc ^ data) & 1) ? (crc >> 1) ^ 0x8C : (crc >> 1);
+//       data >>= 1;
+//     }
+//   }
+//   return crc;
+// }
 //LED COMMANDS 
 
 #define LEDSETPARAM1 1
@@ -417,6 +443,8 @@ static uint8_t crc8(uint8_t *buffer, uint16_t size) {
 #define MEM_ASK_30 130
 #define MEM_ASK_31 131
 
+#define ASK_ALL    199
+
 #define MEM_READ_00 50 //отправка данных по запросу
 #define MEM_READ_01 51
 #define MEM_READ_02 52
@@ -515,7 +543,7 @@ static char * malloc_stringf(const char *format, ...)
         memset(ret, 0, len+1);     
         vsnprintf(ret, len+1, format, args);
       } else {
-        ESP_LOGE("GLOBAL", "Failed to format string: out of memory!");
+        //ESP_LOGE("GLOBAL", "Failed to format string: out of memory!");
       };
     };
     va_end(args);
