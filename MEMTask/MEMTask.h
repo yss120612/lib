@@ -147,9 +147,23 @@ void read(uint16_t index, uint8_t *buf, uint16_t len)
 	uint8_t mem[2];
 	mem[0]=index>>8 & 0x0F;
 	mem[1]=index & 0xFF;
-	
-		if (i2c_master_write_read_device(0,ADDRESS,mem,2,buf,len,pdMS_TO_TICKS(3000))!=ESP_OK){
-			ESP_LOGE(MYTAG,"Error read in a24c32 %d bytes!",len);
+	esp_err_t err=i2c_master_write_read_device(0,ADDRESS,mem,2,buf,len,pdMS_TO_TICKS(3000));
+		if (err!=ESP_OK){
+			switch (err){
+				case ESP_ERR_INVALID_ARG:
+				ESP_LOGE(MYTAG,"Error read in a24c32 %d bytes! (Parameter error)",len);
+				break;
+				case ESP_FAIL:
+				ESP_LOGE(MYTAG,"Error read in a24c32 %d bytes! (Sending command error, slave hasn't ACK the transfer)",len);
+				break;
+				case ESP_ERR_INVALID_STATE:
+				ESP_LOGE(MYTAG,"Error read in a24c32 %d bytes! (I2C driver not installed or not in master mode)",len);
+				break;
+				case ESP_ERR_TIMEOUT:
+				ESP_LOGE(MYTAG,"Error read in a24c32 %d bytes! (Operation timeout because the bus is busy)",len);
+				break;
+			}
+			
 		}else{
 			//ESP_LOGE(MYTAG,"Reading is OK!");
 		}
@@ -169,8 +183,23 @@ void write(uint16_t index, const uint8_t *buf, uint16_t len)
 		towrite=EEPROM_PAGE_SIZE-index%EEPROM_PAGE_SIZE;
 		towrite=counter+towrite>len?len-counter:towrite;
 		memcpy(mem+2,buf,towrite);
-		if (i2c_master_write_to_device(0,ADDRESS,mem,towrite+2,pdMS_TO_TICKS(3000))!=ESP_OK){
-			ESP_LOGE(MYTAG,"Error writing in a24c32 %d bytes len=%d!",towrite,len);
+		esp_err_t err=i2c_master_write_to_device(0,ADDRESS,mem,towrite+2,pdMS_TO_TICKS(3000));
+ 		if (err!=ESP_OK){
+			switch (err){
+				case ESP_ERR_INVALID_ARG:
+				ESP_LOGE(MYTAG,"Error writing in a24c32 %d bytes len=%d! (Parameter error)",towrite,len);
+				break;
+				case ESP_FAIL:
+				ESP_LOGE(MYTAG,"Error writing in a24c32 %d bytes len=%d! (Sending command error, slave hasn't ACK the transfer)",towrite,len);
+				break;
+				case ESP_ERR_INVALID_STATE:
+				ESP_LOGE(MYTAG,"Error writing in a24c32 %d bytes len=%d! (I2C driver not installed or not in master mode)",towrite,len);
+				break;
+				case ESP_ERR_TIMEOUT:
+				ESP_LOGE(MYTAG,"Error writing in a24c32 %d bytes len=%d! (Operation timeout because the bus is busy)",towrite,len);
+				break;
+			}
+			
 		}
 	else{
 			//ESP_LOGE(MYTAG,"Writing is OK %d bytes! len=%d",towrite,len);
@@ -192,3 +221,5 @@ void write(uint16_t index, const uint8_t *buf, uint16_t len)
 
 
 #endif
+
+

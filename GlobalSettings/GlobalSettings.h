@@ -396,6 +396,7 @@ static uint8_t crc8(uint8_t *buffer, uint8_t size) {
 #define RTCGETALARM 21
 #define WWW_GIVE_DATA 42
 #define RTCTIMEADJUST 22
+#define VOICECOMMAND 23
 
 //#define GETDATETIME 10
 

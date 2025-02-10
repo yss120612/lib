@@ -20,7 +20,7 @@ void RELTask::setup()
         ESP_LOGE("RELAY","error send queue");
       }
       vTaskDelay(pdMS_TO_TICKS(100));
-      relay[i].setup(rpins[i],RELTYPE_SWICH,HIGH);
+      relay[i].setup(rpins[i],RELTYPE_SWICH,_level);
     }
     else
     {
@@ -46,7 +46,7 @@ void RELTask::save(uint8_t idx){
         event_t ev;
         ev.state=MEM_EVENT;
         ev.button=MEM_SAVE_10+idx;
-        ev.count=1;//copy to www
+        //ev.count=1;//copy to www
         relState_t rs;
         rs.ison=relay[idx].isOn();
         rs.type =relay[idx].isButton()?RELTYPE_BUTTON:RELTYPE_SWICH;
@@ -72,14 +72,13 @@ void RELTask::loop()
     case MEM_READ_12:
     case MEM_READ_13:
     rs=uint322rel_state(nt.packet.value);
-    relay[nt.title-MEM_READ_10].setup(rpins[nt.title-MEM_READ_10],RELTYPE_SWICH,HIGH);
+    //relay[nt.title-MEM_READ_10].setup(rpins[nt.title-MEM_READ_10],RELTYPE_SWICH,HIGH);
     if (relay[nt.title-MEM_READ_10].isButton())
     {
-      arm(nt.title-MEM_READ_10);
+      //arm(nt.title-MEM_READ_10);
     }
     else{
       relay[nt.title-MEM_READ_10].setState(rs.ison);
-      //if (!nt.packet.var) save(nt.title-RELAYSET1);
     }
    
     break;

@@ -12,7 +12,7 @@ const ledc_channel_t channels[] = {LEDC_CHANNEL_0, LEDC_CHANNEL_1, LEDC_CHANNEL_
 class LEDTask : public Task
 {
 public:
-    LEDTask(const char *name, uint32_t stack, QueueHandle_t q, const uint8_t pns[], bool lv = LOW) : Task(name, stack)
+    LEDTask(const char *name, uint32_t stack, QueueHandle_t q, const int8_t pns[], bool lv = LOW) : Task(name, stack)
     {
         que = q;
         _level = lv;
@@ -33,7 +33,7 @@ protected:
     static void timerCb(TimerHandle_t tm);
     uint16_t _step;
     Led *led[LEDS_COUNT];
-    uint8_t pins[LEDS_COUNT];
+    int8_t pins[LEDS_COUNT];
     TimerHandle_t _timer;
     uint8_t _level;
     QueueHandle_t que;

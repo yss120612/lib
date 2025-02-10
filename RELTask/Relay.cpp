@@ -36,8 +36,12 @@ void Relay::setOff()
 
 void Relay::syncro()
 {
-
-    digitalWrite(pin, state.ison ? state.level : !state.level);
+    if (state.ison){
+        digitalWrite(pin, state.level?HIGH:LOW);
+    }else{
+        digitalWrite(pin, state.level?LOW:HIGH);
+    }
+    
 }
 
 bool Relay::swc()
