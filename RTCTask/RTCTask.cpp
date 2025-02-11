@@ -158,7 +158,7 @@ idx=findAndSetNext(dt,rtc->getAlarm1Mode());
 if (idx==ALARMS_COUNT-1){
   //if (idx==1){
     
-    
+  
     dt=rtc->now();
     ev.alarm.hour=dt.hour();
     ev.alarm.minute=dt.minute();
