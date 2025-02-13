@@ -107,10 +107,8 @@ void RTCTask::alarm(alarm_t &a){
     case  ONCE_ALARM:
     case  EVERYHOUR_ALARM:
     case  EVERYDAY_ALARM:
-  
       rtc->setAlarm2(dt+TimeSpan(0,a.hour,a.minute,0),DS3231_A2_Hour);  
-  
-      break;
+    break;
     case  WDAY_ALARM:
     case  HDAY_ALARM:
     case  WD1_ALARM:
@@ -177,6 +175,7 @@ dt=rtc->getAlarm2();
 rtc->clearAlarm(2);
 
 idx=findAndSetNext(dt,rtc->getAlarm2Mode());
+//ESP_LOGE(RTAG,"ALARM FIRED N-%d" ,idx);
 if (idx<ALARMS_COUNT){
 //ev.state=(buttonstate_t)(ALARM_EVENT<<16 & 0xFF00 | idx & 0x00FF);
 ev.state=(buttonstate_t)ALARM_EVENT;
@@ -260,7 +259,7 @@ event_t ev;
 ev.state=MEM_EVENT;
 ev.button=MEM_SAVE_00+idx;
 ev.alarm=alarms[idx];
-ev.count=1;//copy to www
+ev.count=1;//copy to www deprecated
 xQueueSend(que,&ev,portMAX_DELAY);
 }
 
@@ -299,6 +298,7 @@ else if (nmin>=amin) {dw=dw==6?0:6;}
 alarms[idx].hour=h;
 alarms[idx].wday=dw;
 if (save) saveAlarm(idx);
+ESP_LOGE("RTC","SETUP ALARM N-%d" ,idx);
 return true;
 }
 
@@ -424,20 +424,12 @@ void RTCTask::loop()
         case RTCGETTIME:{
             ev.state=DISP_EVENT;
             ev.button=SHOWTIME;
-            // if (fast_time_interval){
-            //   ev.alarm.hour=25;
-            //   //res = snprintf(buf, sizeof(buf), "%s","Time is not*syncronized**");
-            // }else{
-              DateTime dt=rtc->now();
-              ev.alarm.hour=dt.hour();
-              ev.alarm.minute=dt.minute();
-              ev.alarm.wday=dt.dayOfTheWeek();
-              ev.alarm.action=dt.month();
-              ev.alarm.period=(period_t)dt.day();
-              
-            // }
-            
-            //si=xMessageBufferSend(disp_mess,buf,res,portMAX_DELAY);
+            DateTime dt=rtc->now();
+            ev.alarm.hour=dt.hour();
+            ev.alarm.minute=dt.minute();
+            ev.alarm.wday=dt.dayOfTheWeek();
+            ev.alarm.action=dt.month();
+            ev.alarm.period=(period_t)dt.day();
             xQueueSend(que,&ev,portMAX_DELAY);
             break;
             }
@@ -447,13 +439,11 @@ void RTCTask::loop()
           }else{
               last_sync=nt.packet.value & 0xFFFF | last_sync & 0xFFFF0000;
               DateTime d(last_sync);
-              //TimeSpan *ts=new TimeSpan(0,TIME_SHIFT,0);
               d=d+TimeSpan(0,TIME_SHIFT,0,0);
-              //delete(ts);
               rtc->adjust(d);
               last_sync=0;
               DateTime dt = rtc->now();
-              ESP_LOGE("RTC","Success update time from inet. Time is : %02d:%02d",dt.hour(),dt.minute());
+              ESP_LOGE(RTAG,"Success update time from inet. Time is : %02d:%02d",dt.hour(),dt.minute());
           }
         break;    
         case ALARMSPRINT:
@@ -486,6 +476,7 @@ if (rtc->alarmFired(1)){
 alarmFired(1);
 }
 if (rtc->alarmFired(2)){
+ESP_LOGE(RTAG,"ALARM2 FIRED");  
 alarmFired(2);
 }  
 

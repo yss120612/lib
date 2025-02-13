@@ -9,7 +9,7 @@
 #include "YssRTC.h"
 #include <GlobalSettings.h>
 
-
+#define RTAG "RTCTASK"
 //#define LED_PIN GPIO_NUM_32
 //const ledc_channel_t channels[]={LEDC_CHANNEL_0,LEDC_CHANNEL_1,LEDC_CHANNEL_2,LEDC_CHANNEL_3};
 

@@ -688,7 +688,23 @@ TimeSpan TimeSpan::operator-(const TimeSpan &right) const {
 void RTC_I2C::write_register(uint8_t reg, uint8_t val) {
 uint8_t buffer[2] = {reg, val};
 //   i2c_dev->write(buffer, 2);
-i2c_master_write_to_device(0,DS3231_ADDRESS,buffer,2,pdMS_TO_TICKS(1000));
+esp_err_t err=i2c_master_write_to_device(0,DS3231_ADDRESS,buffer,2,pdMS_TO_TICKS(1000));
+if (err!=ESP_OK){
+  switch (err){
+    case ESP_ERR_INVALID_ARG:
+    ESP_LOGE("RTC","Parameter error");
+    break;
+    case ESP_FAIL:
+    ESP_LOGE("RTC","Sending command error, slave hasn't ACK the transfer");
+    break;
+    case ESP_ERR_INVALID_STATE:
+    ESP_LOGE("RTC","I2C driver not installed or not in master mode");
+    break;
+    case ESP_ERR_TIMEOUT:
+    ESP_LOGE("RTC","Operation timeout because the bus is busy");
+    break;
+  }
+}
 }
 
 /**************************************************************************/
@@ -703,7 +719,23 @@ uint8_t RTC_I2C::read_register(uint8_t reg) {
 //   i2c_dev->write(&reg, 1);
 //   i2c_dev->read(buffer, 1);
 //   return buffer[0];
-    i2c_master_write_read_device(0,DS3231_ADDRESS,&reg,1,buffer,1,pdMS_TO_TICKS(1000));
+  esp_err_t err=i2c_master_write_read_device(0,DS3231_ADDRESS,&reg,1,buffer,1,pdMS_TO_TICKS(1000));
+  if (err!=ESP_OK){
+    switch (err){
+      case ESP_ERR_INVALID_ARG:
+      ESP_LOGE("RTC","Parameter error");
+      break;
+      case ESP_FAIL:
+      ESP_LOGE("RTC","Sending command error, slave hasn't ACK the transfer");
+      break;
+      case ESP_ERR_INVALID_STATE:
+      ESP_LOGE("RTC","I2C driver not installed or not in master mode");
+      break;
+      case ESP_ERR_TIMEOUT:
+      ESP_LOGE("RTC","Operation timeout because the bus is busy");
+      break;
+    }
+  }
     return buffer[0];
 
 }
@@ -751,6 +783,7 @@ void RTC_DS3231::adjust(const DateTime &dt) {
   i2c_master_write_to_device(0,DS3231_ADDRESS,buffer,8,pdMS_TO_TICKS(1000));
   uint8_t statreg = read_register(DS3231_STATUSREG);
   statreg &= ~0x80; // flip OSF bit
+  
   write_register(DS3231_STATUSREG, statreg);
 }
 
