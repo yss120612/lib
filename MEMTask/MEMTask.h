@@ -92,7 +92,7 @@ if (xTaskNotifyWait(0, 0, &command, portMAX_DELAY))	{
 	//process_notify=3 mem_write
     result=process_notify(sstate,&ev,nt);
 	if (result==2) {
-		ev.count=1;//also notify web
+		ev.count=1;//also notify web deprecated
         xQueueSend(que,&ev,0);
     }else if (result==3){
         xTimerStart(_timer,0);
